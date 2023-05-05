@@ -17,4 +17,12 @@
         <param-name>dbPassword</param-name>
         <param-value>Juventus05062001</param-value>
     </context-param>
+    <filter>
+        <filter-name>CheckLogin</filter-name>
+        <filter-class>filters.CheckLogin</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CheckLogin</filter-name>
+        <url-pattern>/GoToHome</url-pattern>
+    </filter-mapping>
 </web-app>
