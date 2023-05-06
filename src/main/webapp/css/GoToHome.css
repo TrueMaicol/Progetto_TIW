@@ -1,0 +1,26 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    background-color: #3b3b3b;
+    color: white;
+}
+
+.treeElement {
+    display: flex;
+    flex-direction: row;
+}
+
+.formContainer > form {
+    background-color: aquamarine;
+}
+

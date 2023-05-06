@@ -4,7 +4,6 @@ import beans.Category;
 import exceptions.CategoryNotExistsException;
 import exceptions.TooManyChildrenException;
 
-import javax.xml.transform.Result;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,48 +17,60 @@ public class CategoryDAO {
         this.conn = conn;
     }
 
-    public ArrayList<Category> getTreeFromId(long ID_parent) throws SQLException {
+    public ArrayList<Category> getTopCategories() throws SQLException, CategoryNotExistsException {
         // create a temporary table treeById used to contain all the discendent of the category with ID_Category = ID_parent
-        ArrayList<Category> tree = new ArrayList<Category>();
-        String query = "WITH RECURSIVE treeById (ID_Category, name, num, parent) as (" +
+
+        /*String query = "WITH RECURSIVE treeById (ID_Category, name, num, parent) as (" +
                 "select ID_Category, name, num, parent from category where ID_Category = ? UNION ALL " +
                 "select c.ID_Category, c.name, c.num, c.parent from treeById as tree JOIN category as c ON tree.ID_Category = c.parent)" +
 
-                "SELECT t.ID_Category, t.name, t.num, t.parent FROM treeById as t;";
+                "SELECT t.ID_Category, t.name, t.num, t.parent FROM treeById as t;"; */
+
+        // retrieve all the top categories
+        String query = "select * from category where parent = 1";
+        ArrayList<Category> tree = new ArrayList<Category>();
         PreparedStatement preparedStatement = conn.prepareStatement(query);
-        preparedStatement.setLong(1,ID_parent);
+        //preparedStatement.setLong(1,ID_parent);
         ResultSet result = preparedStatement.executeQuery();
         while(result.next()) {
-            Category temp = new Category(
-                    result.getLong("ID_Category"),
-                    result.getString("name"),
-                    result.getString("num"),
-                    result.getLong("parent")
-            );
+
+            long ID_Category = result.getLong("ID_Category");
+            String name = result.getString("name");
+            String num = result.getString("num");
+            long parent = result.getLong("parent");
+            ArrayList<Category> children = this.getDirectChildrenOf(ID_Category);
+
+            Category temp = new Category(ID_Category, name, num, parent, children);
             tree.add(temp);
         }
+        // remove the root category, it is not to be seen
+        //tree.remove(0);
+        for(int i=0; i<tree.size(); i++)
+            System.out.println(tree.get(i).getName());
         return tree;
     }
 
-    public Category getCategoryFromId(long ID_Category) throws SQLException {
+    public Category getCategoryFromId(long ID_requested) throws SQLException, CategoryNotExistsException {
         String query = "SELECT * FROM Category WHERE ID_Category = ?";
-        System.out.println("Requested category " + Long.toString(ID_Category));
+        System.out.println("Requested category " + Long.toString(ID_requested));
         PreparedStatement preparedStatement = conn.prepareStatement(query);
-        preparedStatement.setLong(1,ID_Category);
+        preparedStatement.setLong(1,ID_requested);
         ResultSet result = preparedStatement.executeQuery();
         if(!result.isBeforeFirst()) { // no category has been found
             return null;
         } else {
             result.next();
-            Category category = new Category(
-                    result.getLong("ID_Category"),
-                    result.getString("name"),
-                    result.getString("num"),
-                    result.getLong("parent")
-                    );
+            long ID_Category = result.getLong("ID_Category");
+            String name = result.getString("name");
+            String num = result.getString("num");
+            long parent = result.getLong("parent");
+            ArrayList<Category> children = this.getDirectChildrenOf(ID_Category);
+
+            Category category = new Category(ID_Category, name, num, parent, children);
             return category;
         }
     }
+
     public int countDirectChildrenOf(long ID_Category) throws SQLException, CategoryNotExistsException {
         String checkQuery = "select * from category where ID_Category = ?";
         String countQuery = "select count(*) as num from category where parent = ?";
@@ -80,6 +91,40 @@ public class CategoryDAO {
             // no result from query. don't think can happen because it's a count
             return -1;
         }
+    }
+
+    public ArrayList<Category> getDirectChildrenOf(long ID_requested) throws SQLException, CategoryNotExistsException {
+        ArrayList<Category> children = new ArrayList<>();
+        String checkQuery = "select * from category where ID_Category = ?";
+        String getQuery = "select * from category where parent = ?";
+        PreparedStatement checkStatement = conn.prepareStatement(checkQuery);
+        checkStatement.setLong(1,ID_requested);
+        ResultSet checkResult = checkStatement.executeQuery();
+
+        if(!checkResult.isBeforeFirst()) {
+            throw new CategoryNotExistsException("Parent category does not exits in the database");
+        }
+
+        PreparedStatement countStatement = conn.prepareStatement(getQuery);
+        countStatement.setLong(1,ID_requested);
+        ResultSet result = countStatement.executeQuery();
+        if(result.isBeforeFirst()) {
+            while(result.next()) {
+                long ID_Category = result.getLong("ID_Category");
+                String name = result.getString("name");
+                String num = result.getString("num");
+                long parent = result.getLong("parent");
+                ArrayList<Category> tempChildren = this.getDirectChildrenOf(ID_Category);
+
+                Category category = new Category(ID_Category, name, num, parent, children);
+                children.add(category);
+            }
+        } else {
+            // there are no categories with this parent -> this parent has no child
+
+
+        }
+        return children;
     }
 
     public void createCategory(long ID_Category, String name, long parent) throws TooManyChildrenException, CategoryNotExistsException ,SQLException {

@@ -1,5 +1,8 @@
 package controllers;
 
+import beans.Category;
+import dao.CategoryDAO;
+import exceptions.CategoryNotExistsException;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.WebContext;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -12,6 +15,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 @WebServlet("/GoToHome")
 public class GoToHome extends HttpServlet {
@@ -44,9 +48,21 @@ public class GoToHome extends HttpServlet {
         /*
             Login checks done using Filters
          */
+
+
         String path = "/WEB-INF/home.html";
         ServletContext servletContext = getServletContext();
+        CategoryDAO categoryDAO = new CategoryDAO(conn);
         final WebContext ctx = new WebContext(request, response, servletContext, request.getLocale());
+        try {
+            ArrayList<Category> topCategories = categoryDAO.getTopCategories();
+            ctx.setVariable("topCategories",topCategories);
+        } catch (SQLException e) {
+            // send to the page error codes
+        } catch (CategoryNotExistsException e) {
+            // send to the page error codes
+        }
+
 
         templateEngine.process(path, ctx, response.getWriter());
     }

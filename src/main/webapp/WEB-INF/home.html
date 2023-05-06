@@ -1,10 +1,45 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+    <link th:href="@{/css/GoToHome.css}" href="../css/GoToHome.css" rel="stylesheet" type="text/css"/>
+
     <title>List of users</title>
 </head>
 <body>
-    <h1 th:text="${session.user.username}">test</h1>
+
+    <!-- <div th:each="el : ${rootTree}" class="treeElement">
+        <h4 th:text="${el.num + ' ' + el.name}"></h4>
+        <a href="#">copy>>></a>
+    </div>
+
+    <ul class="rootTree">
+        <li th:each="topElement : ${topCategories}" th:insert="list(topCategories.children)"></li>
+    </ul>
+
+    <div th:fragment="list(category)">
+        <h3 th:text="${category.name}"></h3>
+    </div> -->
+
+    <ul class="rootTree">
+        <li th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragment.html}:: list(category)"></li>
+    </ul>
+
+    <div class="formContainer">
+        <form action="#" method="POST">
+            <input type="text" placeholder="for test" name="forTest" />
+            <input type="submit" value="FOR TEST" />
+        </form>
+    </div>
+
+
+
+
+
 </body>
 </html>
