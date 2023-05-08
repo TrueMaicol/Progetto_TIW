@@ -32,4 +32,8 @@ public class Category {
     public long getParent() {
         return parent;
     }
+
+    public ArrayList<Category> getChildren() {
+        return children;
+    }
 }

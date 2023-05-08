@@ -15,7 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-@WebServlet("")
+@WebServlet("/")
 public class LoginPage extends HttpServlet {
     private TemplateEngine templateEngine;
     private Connection conn;

@@ -24,3 +24,12 @@ body {
     background-color: aquamarine;
 }
 
+.treeElement {
+    list-style: none;
+    margin-left: 10px;
+    padding-left: 5px;
+    margin-top: 5px;
+}
+
+
+

@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class CategoryDAO {
 
@@ -45,9 +46,74 @@ public class CategoryDAO {
         }
         // remove the root category, it is not to be seen
         //tree.remove(0);
-        for(int i=0; i<tree.size(); i++)
-            System.out.println(tree.get(i).getName());
+        for(int i=0; i<tree.size(); i++) {
+            printCategory(tree.get(i));
+        }
+
+        //printTree(tree);
         return tree;
+    }
+    public ArrayList<Category> getAllCategories() throws SQLException {
+        String query = "select * from category where ID_Category <> 1";
+        ArrayList<Category> tree = new ArrayList<Category>();
+        PreparedStatement preparedStatement = conn.prepareStatement(query);
+        //preparedStatement.setLong(1,ID_parent);
+        ResultSet result = preparedStatement.executeQuery();
+        while(result.next()) {
+
+            long ID_Category = result.getLong("ID_Category");
+            String name = result.getString("name");
+            String num = result.getString("num");
+            long parent = result.getLong("parent");
+
+            Category temp = new Category(ID_Category, name, num, parent, null);
+            tree.add(temp);
+        }
+        // remove the root category, it is not to be seen
+        //tree.remove(0);
+        System.out.println("\n ORDERED CATEGORIES: ");
+        for(int i=0; i<tree.size(); i++) {
+            System.out.println("ID: "+Long.toString(tree.get(i).getID_Category()));
+            System.out.println("name: "+tree.get(i).getName());
+            System.out.println("num: "+tree.get(i).getNum());
+            System.out.println("parent: "+Long.toString(tree.get(i).getParent()));
+        }
+        /*
+        tree.sort((curr,next) -> {
+            if(Long.getLong(curr.getNum()) < Long.getLong(next.getNum()))
+                return -1;
+            else if(Long.getLong(curr.getNum()) > Long.getLong(next.getNum()))
+                return +1;
+            else
+                return 0;
+        });
+         */
+        //printTree(tree);
+        return tree;
+    }
+    private void printCategory(Category c) {
+        System.out.println("ID: "+Long.toString(c.getID_Category()));
+        System.out.println("name: "+c.getName());
+        System.out.println("num: "+c.getNum());
+        System.out.println("parent: "+Long.toString(c.getParent()));
+        if(c.getChildren() == null)
+            System.out.println("children null");
+        else if(c.getChildren().isEmpty())
+            System.out.println("children empty");
+        else
+            for(int i=0; i<c.getChildren().size(); i++) {
+                System.out.println("ID: "+Long.toString(c.getChildren().get(i).getID_Category()));
+                System.out.println("name: "+c.getChildren().get(i).getName());
+                System.out.println("num: "+c.getChildren().get(i).getNum());
+                System.out.println("parent: "+Long.toString(c.getChildren().get(i).getParent()));
+                if(c.getChildren() == null)
+                    System.out.println("children null");
+                else if(c.getChildren().isEmpty())
+                    System.out.println("children empty");
+                else
+                    System.out.println("altro problema");
+
+            }
     }
 
     public Category getCategoryFromId(long ID_requested) throws SQLException, CategoryNotExistsException {
@@ -116,7 +182,7 @@ public class CategoryDAO {
                 long parent = result.getLong("parent");
                 ArrayList<Category> tempChildren = this.getDirectChildrenOf(ID_Category);
 
-                Category category = new Category(ID_Category, name, num, parent, children);
+                Category category = new Category(ID_Category, name, num, parent, tempChildren);
                 children.add(category);
             }
         } else {

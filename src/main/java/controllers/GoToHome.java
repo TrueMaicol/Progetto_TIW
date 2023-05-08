@@ -56,7 +56,9 @@ public class GoToHome extends HttpServlet {
         final WebContext ctx = new WebContext(request, response, servletContext, request.getLocale());
         try {
             ArrayList<Category> topCategories = categoryDAO.getTopCategories();
+            ArrayList<Category> allCategories = categoryDAO.getAllCategories();
             ctx.setVariable("topCategories",topCategories);
+            ctx.setVariable("allCategories",allCategories);
         } catch (SQLException e) {
             // send to the page error codes
         } catch (CategoryNotExistsException e) {

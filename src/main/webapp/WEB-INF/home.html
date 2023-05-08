@@ -26,13 +26,16 @@
         <h3 th:text="${category.name}"></h3>
     </div> -->
 
-    <ul class="rootTree">
-        <li th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragment.html}:: list(category)"></li>
+    <ul>
+        <li th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragments/treeElement.html}:: list(category)" class="treeElement"></li>
     </ul>
 
     <div class="formContainer">
         <form action="#" method="POST">
-            <input type="text" placeholder="for test" name="forTest" />
+            <input type="text" placeholder="name" name="name" />
+            <select name="parent">
+                <option th:each="category : ${allCategories}" th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
+            </select>
             <input type="submit" value="FOR TEST" />
         </form>
     </div>
