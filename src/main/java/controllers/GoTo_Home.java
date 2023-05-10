@@ -18,7 +18,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 @WebServlet("/GoToHome")
-public class GoToHome extends HttpServlet {
+public class GoTo_Home extends HttpServlet {
     private Connection conn;
     private TemplateEngine templateEngine;
     @Override

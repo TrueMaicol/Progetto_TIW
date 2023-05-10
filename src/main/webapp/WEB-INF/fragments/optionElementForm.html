@@ -6,7 +6,12 @@
 </head>
 <body>
 
-  <option th:fragment="optionElement"></option>
-
+    <!--<th:block th:fragment="optionElement(category)">
+        <option th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
+        <option th:each="child : ${category.children}" th:replace="this::optionElement(${child})"></option>
+    </th:block>-->
+    <th:block th:fragment="optionElement(category)">
+        <option th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
+    </th:block>
 </body>
 </html>

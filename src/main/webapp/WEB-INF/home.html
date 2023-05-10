@@ -13,30 +13,22 @@
 </head>
 <body>
 
-    <!-- <div th:each="el : ${rootTree}" class="treeElement">
-        <h4 th:text="${el.num + ' ' + el.name}"></h4>
-        <a href="#">copy>>></a>
-    </div>
-
     <ul class="rootTree">
-        <li th:each="topElement : ${topCategories}" th:insert="list(topCategories.children)"></li>
-    </ul>
-
-    <div th:fragment="list(category)">
-        <h3 th:text="${category.name}"></h3>
-    </div> -->
-
-    <ul>
-        <li th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragments/treeElement.html}:: list(category)" class="treeElement"></li>
+        <li th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category)" class="treeElement"></li>
     </ul>
 
     <div class="formContainer">
         <form action="#" method="POST">
-            <input type="text" placeholder="name" name="name" />
-            <select name="parent">
-                <option th:each="category : ${allCategories}" th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
-            </select>
-            <input type="submit" value="FOR TEST" />
+            <div class="inputContainer">
+                <input type="text" placeholder="name" name="name" required />
+                <select name="parent" required>
+                    <option th:each="category : ${allCategories}" th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
+                    <!--<th:block th:each="category : ${topCategories}">
+                        <th:block th:insert="@{WEB-INF/fragments/optionElementForm.html} :: optionElement(category)"></th:block>
+                    </th:block>-->
+                </select>
+            </div>
+            <input type="submit" value="add new category" class="submitNewCategoryButton" />
         </form>
     </div>
 

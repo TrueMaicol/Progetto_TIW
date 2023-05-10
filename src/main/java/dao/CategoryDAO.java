@@ -78,17 +78,6 @@ public class CategoryDAO {
             System.out.println("num: "+tree.get(i).getNum());
             System.out.println("parent: "+Long.toString(tree.get(i).getParent()));
         }
-        /*
-        tree.sort((curr,next) -> {
-            if(Long.getLong(curr.getNum()) < Long.getLong(next.getNum()))
-                return -1;
-            else if(Long.getLong(curr.getNum()) > Long.getLong(next.getNum()))
-                return +1;
-            else
-                return 0;
-        });
-         */
-        //printTree(tree);
         return tree;
     }
     private void printCategory(Category c) {
@@ -187,12 +176,19 @@ public class CategoryDAO {
             }
         } else {
             // there are no categories with this parent -> this parent has no child
-
-
         }
         return children;
     }
 
+    /**
+     *
+     * @param ID_Category
+     * @param name
+     * @param parent
+     * @throws TooManyChildrenException
+     * @throws CategoryNotExistsException
+     * @throws SQLException
+     */
     public void createCategory(long ID_Category, String name, long parent) throws TooManyChildrenException, CategoryNotExistsException ,SQLException {
         /* if the parent category does not exist countDirectChildrenOf(parent) should throw two exceptions:
             1. SQLException: the parent column is references an existing ID_Category (it is a foreign key)
