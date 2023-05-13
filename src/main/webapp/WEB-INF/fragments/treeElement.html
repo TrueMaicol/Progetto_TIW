@@ -6,7 +6,11 @@
 </head>
 <body>
     <div th:fragment="list(category)">
-        <h3 th:text="${category.num + ' ' + category.name}"></h3>
+        <div class="treeElementContent">
+            <h3 th:text="${category.num + ' ' + category.name}"></h3>
+            <a th:href="@{/GoToCopyToHome}" th:text="${copyTo ? '>>>copia qui' : '>>>copia'}"></a>
+        </div>
+
         <ul th:if="${ not #lists.isEmpty(category.children)}">
             <li th:each="child : ${category.children}" class="treeElement">
                 <ul th:replace="this::list(${child})"></ul>

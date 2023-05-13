@@ -22,11 +22,16 @@ public class LoginPage extends HttpServlet {
     @Override
     public void init() {
         ServletContext context = getServletContext();
-
         String driver = context.getInitParameter("dbDriver");
         String url = context.getInitParameter("dbUrl");
         String user = context.getInitParameter("dbUser");
         String password = context.getInitParameter("dbPassword");
+
+        ServletContextTemplateResolver templateResolver = new ServletContextTemplateResolver(context);
+        templateResolver.setTemplateMode(TemplateMode.HTML);
+        this.templateEngine = new TemplateEngine();
+        this.templateEngine.setTemplateResolver(templateResolver);
+        templateResolver.setSuffix(".html");
 
         try {
             Class.forName(driver);
@@ -34,12 +39,6 @@ public class LoginPage extends HttpServlet {
         } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException(e);
         }
-
-        ServletContextTemplateResolver templateResolver = new ServletContextTemplateResolver(context);
-        templateResolver.setTemplateMode(TemplateMode.HTML);
-        this.templateEngine = new TemplateEngine();
-        this.templateEngine.setTemplateResolver(templateResolver);
-        templateResolver.setSuffix(".html");
     }
 
     @Override
@@ -47,14 +46,41 @@ public class LoginPage extends HttpServlet {
         ServletContext context = getServletContext();
         String path = "WEB-INF/index.html";
         final WebContext ctx = new WebContext(request, response, context, request.getLocale());
+
+        HttpSession session = request.getSession();
+
+        if (!session.isNew()) { // if the session has already been initialized
+            Boolean inputError = (Boolean) session.getAttribute("inputError");
+            if (inputError != null) { // if it set it is because is true
+
+                Boolean userError = (Boolean) session.getAttribute("userError");
+                Boolean pswError = (Boolean) session.getAttribute("pswError");
+                String inputErrorText = (String) session.getAttribute("inputErrorText");
+
+                session.removeAttribute("inputError");
+                session.removeAttribute("inputErrorText");
+                session.removeAttribute("userError");
+                session.removeAttribute("inputError");
+
+                ctx.setVariable("userError", userError);
+                ctx.setVariable("pswError", pswError);
+                ctx.setVariable("inputError", inputError);
+                ctx.setVariable("inputErrorText", inputErrorText);
+                templateEngine.process(path, ctx, response.getWriter());
+                return;
+            }
+        }
+
         ctx.setVariable("userError", false);
         ctx.setVariable("pswError", false);
-        ctx.setVariable("inputError",false);
-        ctx.setVariable("inputErrorText","");
+        ctx.setVariable("inputError", false);
+        ctx.setVariable("inputErrorText", "");
+
+
         templateEngine.process(path, ctx, response.getWriter());
     }
 
-    @Override
+   /* @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         boolean userError = false, pswError = false;
         final WebContext ctx;
@@ -106,7 +132,8 @@ public class LoginPage extends HttpServlet {
         }
 
 
-    }
+        //this.doGet(request,response);
+    }*/
 
     @Override
     public void destroy() {

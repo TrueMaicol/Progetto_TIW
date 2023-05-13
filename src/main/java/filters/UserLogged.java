@@ -1,13 +1,12 @@
 package filters;
 
 import javax.servlet.*;
-import javax.servlet.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
-public class CheckLogin implements Filter {
+public class UserLogged implements Filter {
     public void init(FilterConfig config) throws ServletException {
     }
 

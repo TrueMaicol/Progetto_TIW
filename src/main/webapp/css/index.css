@@ -55,6 +55,7 @@ body {
 
 .loginSubmitButton:hover {
     background-color: #00b2ff;
+    cursor: pointer;
 }
 
 /* Styles to display an error message */

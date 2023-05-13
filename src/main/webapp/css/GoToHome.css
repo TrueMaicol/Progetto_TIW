@@ -23,6 +23,12 @@ body {
     flex-direction: row;
 }
 
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
 .formContainer > form {
     display: flex;
     flex-direction: column;
@@ -30,14 +36,14 @@ body {
     gap: 10px;
 }
 
-.formContainer > form > .inputContainer {
+.inputContainer {
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 10px;
 }
 
-.formContainer > form > .inputContainer > input, select {
+.newCategoryInput {
     height: 4vh;
     font-size: 1rem;
     border: 0;
@@ -46,13 +52,23 @@ body {
     padding-left: 12px;
 }
 
-.formContainer > form > .submitNewCategoryButton {
+.submitNewCategoryButton {
     height: 4vh;
     font-size: 0.9rem;
-    border: 0;
-    border-radius: 15px;
     width: 24vw;
+    padding: 1vh 2vw;
+    border: 2px solid white;
+    color: white;
+    outline: none;
+    border-radius: 13px;
+    background-color: #3b3b3b;
+    transition: background-color 0.3s linear;
     margin: auto;
+}
+
+.submitNewCategoryButton:hover {
+    cursor: pointer;
+    background-color: #00b2ff;
 }
 
 .treeElement {
@@ -60,4 +76,30 @@ body {
     margin-left: 10px;
     padding-left: 5px;
     margin-top: 5px;
+}
+
+.treeElementContent {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 9px;
+}
+
+.treeElementContent > a {
+    text-decoration: none;
+    color: white;
+}
+
+.treeElementContent > a:hover {
+    text-decoration-line: underline;
+}
+
+.displayInputError {
+    border: 3px solid #ff0000;
+}
+
+.textError {
+    color: #ff2323;
+    font-size: 0.9rem;
+    margin: auto;
 }

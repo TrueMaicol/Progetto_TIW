@@ -18,10 +18,16 @@
     </ul>
 
     <div class="formContainer">
-        <form action="#" method="POST">
+        <form th:action="@{/CreateNewCategory}" method="POST">
             <div class="inputContainer">
-                <input type="text" placeholder="name" name="name" required />
-                <select name="parent" required>
+                <input type="text" placeholder="name" name="name" required
+                       class="newCategoryInput"
+                       th:classappend="${nameError ? 'displayInputError' : ''} "
+                />
+                <select name="parent" required
+                        class="newCategoryInput"
+                        th:classappend="${parentError ? 'displayInputError' : ''} "
+                >
                     <option th:each="category : ${allCategories}" th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
                     <!--<th:block th:each="category : ${topCategories}">
                         <th:block th:insert="@{WEB-INF/fragments/optionElementForm.html} :: optionElement(category)"></th:block>
@@ -30,6 +36,7 @@
             </div>
             <input type="submit" value="add new category" class="submitNewCategoryButton" />
         </form>
+        <p th:if="${inputError}" th:text="${inputErrorText}" class="textError"></p>
     </div>
 
 

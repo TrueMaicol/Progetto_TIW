@@ -44,20 +44,12 @@ public class CategoryDAO {
             Category temp = new Category(ID_Category, name, num, parent, children);
             tree.add(temp);
         }
-        // remove the root category, it is not to be seen
-        //tree.remove(0);
-        for(int i=0; i<tree.size(); i++) {
-            printCategory(tree.get(i));
-        }
-
-        //printTree(tree);
         return tree;
     }
     public ArrayList<Category> getAllCategories() throws SQLException {
-        String query = "select * from category where ID_Category <> 1";
+        String query = "select * from category order by num";
         ArrayList<Category> tree = new ArrayList<Category>();
         PreparedStatement preparedStatement = conn.prepareStatement(query);
-        //preparedStatement.setLong(1,ID_parent);
         ResultSet result = preparedStatement.executeQuery();
         while(result.next()) {
 
@@ -69,15 +61,7 @@ public class CategoryDAO {
             Category temp = new Category(ID_Category, name, num, parent, null);
             tree.add(temp);
         }
-        // remove the root category, it is not to be seen
-        //tree.remove(0);
-        System.out.println("\n ORDERED CATEGORIES: ");
-        for(int i=0; i<tree.size(); i++) {
-            System.out.println("ID: "+Long.toString(tree.get(i).getID_Category()));
-            System.out.println("name: "+tree.get(i).getName());
-            System.out.println("num: "+tree.get(i).getNum());
-            System.out.println("parent: "+Long.toString(tree.get(i).getParent()));
-        }
+
         return tree;
     }
     private void printCategory(Category c) {
@@ -141,6 +125,7 @@ public class CategoryDAO {
         countStatement.setLong(1,ID_Category);
         ResultSet result = countStatement.executeQuery();
         if(result.isBeforeFirst()) {
+            result.next();
             return result.getInt("num");
         } else {
             // no result from query. don't think can happen because it's a count
@@ -181,31 +166,35 @@ public class CategoryDAO {
     }
 
     /**
-     *
-     * @param ID_Category
-     * @param name
-     * @param parent
-     * @throws TooManyChildrenException
-     * @throws CategoryNotExistsException
-     * @throws SQLException
+     * This method creates a category and puts it inside the tree
+     * @param name is the name of the new category
+     * @param parent is the ID_Category of the parent category
+     * @throws TooManyChildrenException is thrown if the choosen parent has too many children (max = 9)
+     * @throws CategoryNotExistsException is thrown if there is no Category inside the dabatase with the ID_Category of the choosen parent
+     * @throws SQLException is thrown if an error occured when executing the query
      */
-    public void createCategory(long ID_Category, String name, long parent) throws TooManyChildrenException, CategoryNotExistsException ,SQLException {
+    public void createCategory(String name, long parent) throws TooManyChildrenException, CategoryNotExistsException ,SQLException {
         /* if the parent category does not exist countDirectChildrenOf(parent) should throw two exceptions:
             1. SQLException: the parent column is references an existing ID_Category (it is a foreign key)
             2. CategoryNotExistsException: the check query found no record for this specific ID_Category
            Since we don't catch the exceptions here, those will be redirected to the caller of createCategory
          */
+        String num;
         int currentNumChildren = this.countDirectChildrenOf(parent);
         Category parentCategory = getCategoryFromId(parent);
         if(currentNumChildren >= 9)
             throw new TooManyChildrenException("This parent has too many children");
 
-        String num = parentCategory.getNum() + Integer.toString(currentNumChildren + 1);
+        if(parentCategory.getID_Category() == 1) { // root category
+            num = Integer.toString(currentNumChildren + 1);
+        } else {
+            num = parentCategory.getNum() + Integer.toString(currentNumChildren + 1);
+        }
         String query = "INSERT INTO category(name,num,parent) values (?,?,?)";
         PreparedStatement createStatement = conn.prepareStatement(query);
         createStatement.setString(1,name);
         createStatement.setString(2,num);
-        createStatement.setLong(1,parent);
+        createStatement.setLong(3,parent);
         createStatement.executeUpdate();
     }
 

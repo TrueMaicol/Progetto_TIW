@@ -18,11 +18,12 @@
         <param-value>Juventus05062001</param-value>
     </context-param>
     <filter>
-        <filter-name>CheckLogin</filter-name>
-        <filter-class>filters.CheckLogin</filter-class>
+        <filter-name>UserLogged</filter-name>
+        <filter-class>filters.UserLogged</filter-class>
     </filter>
     <filter-mapping>
-        <filter-name>CheckLogin</filter-name>
+        <filter-name>UserLogged</filter-name>
         <url-pattern>/GoToHome</url-pattern>
+        <url-pattern>/CreateNewCategory</url-pattern>
     </filter-mapping>
 </web-app>

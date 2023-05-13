@@ -49,7 +49,7 @@ public class GoTo_Home extends HttpServlet {
             Login checks done using Filters
          */
 
-
+        HttpSession session = request.getSession();
         String path = "/WEB-INF/home.html";
         ServletContext servletContext = getServletContext();
         CategoryDAO categoryDAO = new CategoryDAO(conn);
@@ -59,14 +59,41 @@ public class GoTo_Home extends HttpServlet {
             ArrayList<Category> allCategories = categoryDAO.getAllCategories();
             ctx.setVariable("topCategories",topCategories);
             ctx.setVariable("allCategories",allCategories);
+            ctx.setVariable("copyTo", false);
+            if(!session.isNew()) { // if the session has already been initialized
+                Boolean inputError = (Boolean) session.getAttribute("inputError");
+                if(inputError != null) { // there has been a problem
+                    Boolean nameError = (Boolean) session.getAttribute("nameError");
+                    Boolean parentError = (Boolean) session.getAttribute("parentError");
+                    String inputErrorText = (String) session.getAttribute("inputErrorText");
+
+                    ctx.setVariable("nameError",nameError);
+                    ctx.setVariable("parentError",parentError);
+                    ctx.setVariable("inputError",inputError);
+                    ctx.setVariable("inputErrorText",inputErrorText);
+                    templateEngine.process(path, ctx, response.getWriter());
+                    return;
+                }
+            }
+
+            ctx.setVariable("nameError",false);
+            ctx.setVariable("parentError",false);
+            ctx.setVariable("inputError",false);
+            ctx.setVariable("inputErrorText","");
+            templateEngine.process(path, ctx, response.getWriter());
+
         } catch (SQLException e) {
-            // send to the page error codes
+            ctx.setVariable("serverError",true);
+            ctx.setVariable("serverErrorText","Server error");
+            templateEngine.process(path, ctx, response.getWriter());
         } catch (CategoryNotExistsException e) {
-            // send to the page error codes
+            ctx.setVariable("serverError",true);
+            ctx.setVariable("serverErrorText","Root category does not exist");
+            templateEngine.process(path, ctx, response.getWriter());
         }
 
 
-        templateEngine.process(path, ctx, response.getWriter());
+
     }
 
     @Override
