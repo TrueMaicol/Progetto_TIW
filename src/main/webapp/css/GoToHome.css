@@ -103,3 +103,7 @@ body {
     font-size: 0.9rem;
     margin: auto;
 }
+
+.textRed {
+    color: red;
+}

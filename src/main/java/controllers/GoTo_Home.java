@@ -59,7 +59,14 @@ public class GoTo_Home extends HttpServlet {
             ArrayList<Category> allCategories = categoryDAO.getAllCategories();
             ctx.setVariable("topCategories",topCategories);
             ctx.setVariable("allCategories",allCategories);
-            ctx.setVariable("copyTo", false);
+            String copyFrom = request.getParameter("from");
+            if(copyFrom != null) {
+                ctx.setVariable("copyTo", true);
+                ctx.setVariable("treeToBeCopied",Long.parseLong(copyFrom));
+            } else {
+                ctx.setVariable("copyTo", false);
+            }
+
             if(!session.isNew()) { // if the session has already been initialized
                 Boolean inputError = (Boolean) session.getAttribute("inputError");
                 if(inputError != null) { // there has been a problem

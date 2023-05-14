@@ -13,8 +13,18 @@
 </head>
 <body>
 
+
     <ul class="rootTree">
-        <li th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category)" class="treeElement"></li>
+        <!--<li th:if="${not copyTo}" th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category)" class="treeElement"></li>-->
+        <th:block th:each="category : ${topCategories}">
+            <th:block th:if="${copyTo && category.ID_Category == treeToBeCopied}">
+                <li th:insert="@{WEB-INF/fragments/treeElement.html} :: redList(category = ${category})" class="treeElement"></li>
+            </th:block>
+            <th:block th:if="${!copyTo && category.ID_Category != treeToBeCopied}">
+                <li th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category = ${category})" class="treeElement"></li>
+            </th:block>
+        </th:block>
+
     </ul>
 
     <div class="formContainer">
