@@ -7,6 +7,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
 
+
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
@@ -63,8 +64,8 @@ public class CreateNewCategory extends HttpServlet {
 
             session.setAttribute("nameError",nameError);
             session.setAttribute("parentError",parentError);
-            session.setAttribute("inputError",inputError);
-            session.setAttribute("inputErrorText",inputErrorText);
+            session.setAttribute("inputErrorNewCategory",inputError);
+            session.setAttribute("inputErrorTextNewCategory",inputErrorText);
 
             path = getServletContext().getContextPath() + "/GoToHome";
 
@@ -78,28 +79,26 @@ public class CreateNewCategory extends HttpServlet {
                 inputErrorText = "Internal server error, try again later";
                 session.setAttribute("nameError",false);
                 session.setAttribute("parentError",false);
-                session.setAttribute("inputError",true);
-                session.setAttribute("inputErrorText",inputErrorText);
+                session.setAttribute("inputErrorNewCategory",true);
+                session.setAttribute("inputErrorTextNewCategory",inputErrorText);
             } catch (TooManyChildrenException e) {
                 inputErrorText = "Selected parent has too many children (max 9)";
                 session.setAttribute("nameError",false);
                 session.setAttribute("parentError",true);
-                session.setAttribute("inputError",true);
-                session.setAttribute("inputErrorText",inputErrorText);
+                session.setAttribute("inputErrorNewCategory",true);
+                session.setAttribute("inputErrorTextNewCategory",inputErrorText);
             } catch (CategoryNotExistsException e) {
                 inputErrorText = "Selected parent does not exist";
                 session.setAttribute("nameError",false);
                 session.setAttribute("parentError",true);
-                session.setAttribute("inputError",true);
-                session.setAttribute("inputErrorText",inputErrorText);
+                session.setAttribute("inputErrorNewCategory",true);
+                session.setAttribute("inputErrorTextNewCategory",inputErrorText);
             } finally {
                 path = getServletContext().getContextPath() + "/GoToHome";
 
                 response.sendRedirect(path);
             }
         }
-
-
     }
 
     public void destroy() {

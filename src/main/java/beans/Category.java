@@ -1,5 +1,7 @@
 package beans;
 
+import exceptions.TooManyChildrenException;
+
 import java.util.ArrayList;
 
 public class Category {
@@ -28,12 +30,20 @@ public class Category {
     public String getNum() {
         return num;
     }
-
+    public void setNum(String num) {
+        this.num = num;
+    }
     public long getParent() {
         return parent;
     }
 
     public ArrayList<Category> getChildren() {
         return children;
+    }
+
+    public void addNewChildren(Category child) throws TooManyChildrenException {
+        if(this.children.size() == 9)
+            throw new TooManyChildrenException("Destination would have too many children after add");
+        children.add(child);
     }
 }

@@ -5,29 +5,36 @@
     <title>Title</title>
 </head>
 <body>
+
+
     <div th:fragment="list(category)">
         <div class="treeElementContent">
             <h3 th:text="${category.num + ' ' + category.name}"></h3>
-            <a th:href="@{/GoToCopyToHome}" th:text="${copyTo ? '>>>copia qui' : '>>>copia'}"></a>
+
+            <a th:if="${!copyTo}" th:href="@{/GoToHome(from=${category.ID_Category})}" th:text="${copyTo ? '>>>copia qui' : '>>>copia'}" class="copyLink"></a>
+            <a th:if="${copyTo}" th:href="@{/CopySubTree(from=${treeToBeCopied},to=${category.ID_Category})}" th:text="${copyTo ? '>>>copia qui' : '>>>copia'}" class="copyLink"></a>
         </div>
 
         <ul th:if="${ not #lists.isEmpty(category.children)}">
             <th:block th:each="child : ${category.children}">
                 <li class="treeElement">
-                    <ul th:if="${copyTo && child.ID_Category == treeToBeCopied}" th:replace="this::redList(${child})"></ul>
-                    <ul th:if="${!copyTo && category.ID_Category != treeToBeCopied}" th:replace="this::list(${child})"></ul>
+                    <th:block th:if="${copyTo && child.ID_Category == treeToBeCopied}" >
+                        <ul th:replace="this::redList(${child})"></ul>
+                    </th:block>
+                    <th:block th:if="${not (copyTo && child.ID_Category == treeToBeCopied) }">
+                        <ul th:replace="this::list(${child})"></ul>
+                    </th:block>
                 </li>
             </th:block>
-            <li class="treeElement">
+            <!--<li class="treeElement">
                 <ul th:replace="this::list(${child})"></ul>
-            </li>
+            </li>-->
         </ul>
-
     </div>
 
     <div th:fragment="redList(category)">
         <div class="treeElementContent">
-            <h3 th:text="${category.num + ' ' + category.name}" class="textRed"></h3>
+            <h3 th:text="${category.num + ' ' + category.name}" class="textRed textElement" ></h3>
         </div>
 
         <ul th:if="${ not #lists.isEmpty(category.children)}">

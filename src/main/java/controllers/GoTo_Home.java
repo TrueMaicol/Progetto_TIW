@@ -65,19 +65,54 @@ public class GoTo_Home extends HttpServlet {
                 ctx.setVariable("treeToBeCopied",Long.parseLong(copyFrom));
             } else {
                 ctx.setVariable("copyTo", false);
+                ctx.setVariable("treeToBeCopied",0);
             }
 
             if(!session.isNew()) { // if the session has already been initialized
-                Boolean inputError = (Boolean) session.getAttribute("inputError");
-                if(inputError != null) { // there has been a problem
+                Boolean inputErrorNewCategory = (Boolean) session.getAttribute("inputErrorNewCategory");
+                Boolean inputErrorCopyTree = (Boolean) session.getAttribute("inputErrorCopySubTree");
+                session.removeAttribute("inputErrorNewCategory");
+                session.removeAttribute("inputErrorCopySubTree");
+
+                if(inputErrorNewCategory != null) { // there has been a problem
                     Boolean nameError = (Boolean) session.getAttribute("nameError");
                     Boolean parentError = (Boolean) session.getAttribute("parentError");
-                    String inputErrorText = (String) session.getAttribute("inputErrorText");
+                    String inputErrorText = (String) session.getAttribute("inputErrorTextNewCategory");
+                    session.removeAttribute("nameError");
+                    session.removeAttribute("parentError");
+                    session.removeAttribute("inputErrorTextNewCategory");
 
                     ctx.setVariable("nameError",nameError);
                     ctx.setVariable("parentError",parentError);
-                    ctx.setVariable("inputError",inputError);
-                    ctx.setVariable("inputErrorText",inputErrorText);
+                    ctx.setVariable("inputErrorNewCategory",inputErrorNewCategory);
+                    ctx.setVariable("inputErrorTextNewCategory",inputErrorText);
+
+                    ctx.setVariable("serverError",false);
+                    ctx.setVariable("serverErrorText","");
+
+                    templateEngine.process(path, ctx, response.getWriter());
+                    /*
+                     the return is not mandatory because only one servlet at a time can make a request to this servlet
+                     so i cannot have copySubTree and newCategory errors true at the same time
+                     */
+                    return;
+                }
+                if(inputErrorCopyTree != null) {
+                    Boolean fromError = (Boolean) session.getAttribute("fromError");
+                    Boolean toError = (Boolean) session.getAttribute("toError");
+                    String inputErrorText = (String) session.getAttribute("inputErrorTextCopySubTree");
+                    session.removeAttribute("fromError");
+                    session.removeAttribute("toError");
+                    session.removeAttribute("inputErrorTextCopySubTree");
+
+                    ctx.setVariable("fromError",fromError);
+                    ctx.setVariable("toError",toError);
+                    ctx.setVariable("inputErrorCopySubTree",inputErrorText);
+                    ctx.setVariable("inputErrorTextCopySubTree",inputErrorText);
+
+                    ctx.setVariable("serverError",false);
+                    ctx.setVariable("serverErrorText","");
+
                     templateEngine.process(path, ctx, response.getWriter());
                     return;
                 }
@@ -85,8 +120,16 @@ public class GoTo_Home extends HttpServlet {
 
             ctx.setVariable("nameError",false);
             ctx.setVariable("parentError",false);
-            ctx.setVariable("inputError",false);
-            ctx.setVariable("inputErrorText","");
+            ctx.setVariable("inputErrorNewCategory",false);
+            ctx.setVariable("inputErrorTextNewCategory","");
+            ctx.setVariable("fromError",false);
+            ctx.setVariable("toError",false);
+            ctx.setVariable("inputErrorCopySubTree",false);
+            ctx.setVariable("inputErrorTextCopySubTree","");
+
+            ctx.setVariable("serverError",false);
+            ctx.setVariable("serverErrorText","");
+
             templateEngine.process(path, ctx, response.getWriter());
 
         } catch (SQLException e) {
@@ -98,9 +141,6 @@ public class GoTo_Home extends HttpServlet {
             ctx.setVariable("serverErrorText","Root category does not exist");
             templateEngine.process(path, ctx, response.getWriter());
         }
-
-
-
     }
 
     @Override

@@ -1,7 +1,9 @@
 * {
-
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
     font-family: 'Roboto', sans-serif;
+    font-weight: 300;
 }
 
 body {
@@ -85,12 +87,12 @@ body {
     gap: 9px;
 }
 
-.treeElementContent > a {
+.copyLink {
     text-decoration: none;
     color: white;
 }
 
-.treeElementContent > a:hover {
+.copyLink:hover {
     text-decoration-line: underline;
 }
 

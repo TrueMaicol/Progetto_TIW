@@ -12,43 +12,51 @@
     <title>List of users</title>
 </head>
 <body>
-
-
-    <ul class="rootTree">
-        <!--<li th:if="${not copyTo}" th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category)" class="treeElement"></li>-->
-        <th:block th:each="category : ${topCategories}">
-            <th:block th:if="${copyTo && category.ID_Category == treeToBeCopied}">
-                <li th:insert="@{WEB-INF/fragments/treeElement.html} :: redList(category = ${category})" class="treeElement"></li>
-            </th:block>
-            <th:block th:if="${!copyTo && category.ID_Category != treeToBeCopied}">
-                <li th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category = ${category})" class="treeElement"></li>
-            </th:block>
-        </th:block>
-
-    </ul>
-
-    <div class="formContainer">
-        <form th:action="@{/CreateNewCategory}" method="POST">
-            <div class="inputContainer">
-                <input type="text" placeholder="name" name="name" required
-                       class="newCategoryInput"
-                       th:classappend="${nameError ? 'displayInputError' : ''} "
-                />
-                <select name="parent" required
-                        class="newCategoryInput"
-                        th:classappend="${parentError ? 'displayInputError' : ''} "
-                >
-                    <option th:each="category : ${allCategories}" th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
-                    <!--<th:block th:each="category : ${topCategories}">
-                        <th:block th:insert="@{WEB-INF/fragments/optionElementForm.html} :: optionElement(category)"></th:block>
-                    </th:block>-->
-                </select>
+    <th:block th:unless="${serverError}">
+        <div class="treeContainer">
+            <div>
+                <ul class="rootTree">
+                    <!--<li th:if="${not copyTo}" th:each="category : ${topCategories}" th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category)" class="treeElement"></li>-->
+                    <th:block th:each="category : ${topCategories}">
+                        <th:block th:if="${copyTo && category.ID_Category == treeToBeCopied}">
+                            <li th:insert="@{WEB-INF/fragments/treeElement.html} :: redList(category = ${category})" class="treeElement"></li>
+                        </th:block>
+                        <th:block th:if="${!copyTo || category.ID_Category != treeToBeCopied}">
+                            <li th:insert="@{WEB-INF/fragments/treeElement.html} :: list(category = ${category})" class="treeElement"></li>
+                        </th:block>
+                    </th:block>
+                </ul>
+                <a th:if="${copyTo}" th:href="@{/CopySubTree(from=${treeToBeCopied},to=1)}" th:text="${copyTo ? '>>>copia qui' : '>>>copia'}" class="copyLink"></a>
             </div>
-            <input type="submit" value="add new category" class="submitNewCategoryButton" />
-        </form>
-        <p th:if="${inputError}" th:text="${inputErrorText}" class="textError"></p>
-    </div>
 
+            <p th:if="${inputErrorCopySubTree}" th:text="${inputErrorTextCopySubTree}" class="textRed"></p>
+        </div>
+        <div class="formContainer">
+            <form th:action="@{/CreateNewCategory}" method="POST">
+                <div class="inputContainer">
+                    <input type="text" placeholder="name" name="name" required
+                           class="newCategoryInput"
+                           th:classappend="${nameError ? 'displayInputError' : ''} "
+                    />
+                    <select name="parent" required
+                            class="newCategoryInput"
+                            th:classappend="${parentError ? 'displayInputError' : ''} "
+                    >
+                        <option th:each="category : ${allCategories}" th:value="${category.ID_Category}" th:text="${category.num + ' ' + category.name}"></option>
+                        <!--<th:block th:each="category : ${topCategories}">
+                            <th:block th:insert="@{WEB-INF/fragments/optionElementForm.html} :: optionElement(category)"></th:block>
+                        </th:block>-->
+                    </select>
+                </div>
+                <input type="submit" value="add new category" class="submitNewCategoryButton" />
+            </form>
+            <p th:if="${inputErrorNewCategory}" th:text="${inputErrorTextNewCategory}" class="textError"></p>
+        </div>
+
+    </th:block>
+    <th:block th:if="${serverError}">
+        <h1 th:text="${serverErrorText}"></h1>
+    </th:block>
 
 
 

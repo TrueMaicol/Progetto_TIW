@@ -91,9 +91,28 @@ public class CategoryDAO {
 
     public Category getCategoryFromId(long ID_requested) throws SQLException, CategoryNotExistsException {
         String query = "SELECT * FROM Category WHERE ID_Category = ?";
-        System.out.println("Requested category " + Long.toString(ID_requested));
         PreparedStatement preparedStatement = conn.prepareStatement(query);
         preparedStatement.setLong(1,ID_requested);
+        ResultSet result = preparedStatement.executeQuery();
+        if(!result.isBeforeFirst()) { // no category has been found
+            return null;
+        } else {
+            result.next();
+            long ID_Category = result.getLong("ID_Category");
+            String name = result.getString("name");
+            String num = result.getString("num");
+            long parent = result.getLong("parent");
+            ArrayList<Category> children = this.getDirectChildrenOf(ID_Category);
+
+            Category category = new Category(ID_Category, name, num, parent, children);
+            return category;
+        }
+    }
+
+    public Category getCategoryFromNum(String number) throws SQLException, CategoryNotExistsException {
+        String query = "SELECT * FROM Category WHERE num = ?";
+        PreparedStatement preparedStatement = conn.prepareStatement(query);
+        preparedStatement.setString(1,number);
         ResultSet result = preparedStatement.executeQuery();
         if(!result.isBeforeFirst()) { // no category has been found
             return null;
@@ -123,6 +142,30 @@ public class CategoryDAO {
 
         PreparedStatement countStatement = conn.prepareStatement(countQuery);
         countStatement.setLong(1,ID_Category);
+        ResultSet result = countStatement.executeQuery();
+        if(result.isBeforeFirst()) {
+            result.next();
+            return result.getInt("num");
+        } else {
+            // no result from query. don't think can happen because it's a count
+            return -1;
+        }
+    }
+
+    public int countDirectChildrenOf(String num) throws SQLException, CategoryNotExistsException {
+        String checkQuery = "select * from category where num = ?";
+        String countQuery = "select count(*) as num from category where parent = ?";
+        PreparedStatement checkStatement = conn.prepareStatement(checkQuery);
+        checkStatement.setString(1,num);
+        ResultSet checkResult = checkStatement.executeQuery();
+
+        if(!checkResult.isBeforeFirst()) {
+            throw new CategoryNotExistsException("Parent category does not exits in the database");
+        }
+
+        PreparedStatement countStatement = conn.prepareStatement(countQuery);
+        Category curr = this.getCategoryFromNum(num);
+        countStatement.setLong(1,curr.getID_Category());
         ResultSet result = countStatement.executeQuery();
         if(result.isBeforeFirst()) {
             result.next();
@@ -198,8 +241,42 @@ public class CategoryDAO {
         createStatement.executeUpdate();
     }
 
-    public void copySubTree(long ID_source, long ID_destination) {
+    public void copySubTree(long ID_source, long ID_destination) throws SQLException, CategoryNotExistsException, TooManyChildrenException {
+        String num,query;
+        int currentNumDestinationChildren = this.countDirectChildrenOf(ID_destination);
+        int directSourceChildren = this.countDirectChildrenOf(ID_source);
+        if(currentNumDestinationChildren + directSourceChildren > 9)
+            throw new TooManyChildrenException("Impossible to copy the selected sub tree. The resulting tree would have to many children");
+        Category source, destination;
+        ArrayList<Category> children;
+        source = this.getCategoryFromId(ID_source);
+        destination = this.getCategoryFromId(ID_destination);
+        destination.addNewChildren(source);
+        updateNum(source, destination);
+    }
 
+    private void updateNum(Category curr, Category parent) throws SQLException, CategoryNotExistsException {
+        //update curr
+        String num, query;
+        query = "INSERT INTO category(name,num,parent) VALUES (?,?,?)";
+        PreparedStatement copyStatement = conn.prepareStatement(query);
+        int currentParentNumChildren = this.countDirectChildrenOf(parent.getNum());
+
+        if(parent.getNum().equals("0"))
+            num = Integer.toString(currentParentNumChildren + 1);
+        else
+            num = parent.getNum() + Integer.toString(currentParentNumChildren + 1);
+
+        Category newParent = this.getCategoryFromNum(parent.getNum());
+        curr.setNum(num);
+        copyStatement.setString(1,curr.getName());
+        copyStatement.setString(2,curr.getNum());
+        copyStatement.setLong(3,newParent.getID_Category());
+        copyStatement.executeUpdate();
+
+        for(Category child : curr.getChildren()) {
+            updateNum(child,curr);
+        }
     }
 
 }
