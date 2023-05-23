@@ -18,7 +18,7 @@ public class UserLogged implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
-        String loginPath = req.getServletContext().getContextPath();
+        String loginPath = req.getServletContext().getContextPath() + "/index.html";
         HttpSession s = req.getSession();
 
         if(s.isNew() || s.getAttribute("user") == null) {

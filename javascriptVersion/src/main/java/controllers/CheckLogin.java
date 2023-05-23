@@ -95,6 +95,7 @@ public class CheckLogin extends HttpServlet {
                     response.getWriter().flush();
 
                 } else {
+                    request.getSession().setAttribute("user",result.getUsername());
                     response.setStatus(HttpServletResponse.SC_OK);
                     jsonResponse.addProperty("username",result.getUsername());
 

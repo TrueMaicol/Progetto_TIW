@@ -19,13 +19,6 @@ public class CategoryDAO {
     }
 
     public ArrayList<Category> getTopCategories() throws SQLException, CategoryNotExistsException {
-        // create a temporary table treeById used to contain all the discendent of the category with ID_Category = ID_parent
-
-        /*String query = "WITH RECURSIVE treeById (ID_Category, name, num, parent) as (" +
-                "select ID_Category, name, num, parent from category where ID_Category = ? UNION ALL " +
-                "select c.ID_Category, c.name, c.num, c.parent from treeById as tree JOIN category as c ON tree.ID_Category = c.parent)" +
-
-                "SELECT t.ID_Category, t.name, t.num, t.parent FROM treeById as t;"; */
 
         // retrieve all the top categories
         String query = "select * from category where parent = 1";

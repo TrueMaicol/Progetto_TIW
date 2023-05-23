@@ -11,25 +11,15 @@
 
     function PageManager() {
         var copyTo = false;
-        var tree = new CategoryTree();
+        const tree = new CategoryTree();
+        const newCategoryForm = new NewCategoryForm();
         var newLocalCategory = {};
 
         this.start = function() {
             // start all the listener to the objects
 
-            tree.printTree();
-            const newCategoryForm = document.getElementById("newCategoryForm");
-
-            newCategoryForm.addEventListener("submit", (e) => {
-                // handle new category process
-                e.preventDefault();
-                const name = document.getElementById("newCategoryName").value;
-                const parent = document.getElementById("newCategoryParent").value;
-
-                this.newLocalCategory();
-                tree.insertNewCategory(newLocalCategory);
-            });
-
+            tree.init();
+            newCategoryForm.init();
 
         };
         this.newLocalCategory = function() {
@@ -43,14 +33,16 @@
     }
 
     function CategoryTree() {
-        var categoryList = {};
-        this.printTree = function() {
+        var categoryList = {}, copyTo = false;
+        const rootList = document.getElementById("rootTree");
+        const treeTextError = document.getElementById("treeTextError");
+        this.init = function() {
             // print the tree in the page
             this.getTree();
-            // ...
+            this.printTree();
             this.addListeners();
         }
-        this.addListeners = function(callback) {
+        this.addListeners = function() {
             const copyLink = document.getElementsByClassName("copyToLink");
             copyLink.forEach((x) => {
                 x.addEventListener("click",(e) => {
@@ -65,6 +57,37 @@
         }
         this.getTree = function() {
             // get the tree from the database
+            makeCall("GET", "GetTree",null,function(req) {
+                switch(req.status) {
+                    case 200:
+                        categoryList = JSON.parse(req.responseText);
+                        console.log(categoryList);
+                        break;
+                    case 400:
+                    case 401:
+                        console.log("Request status "+req.status);
+                        treeTextError.innerText = "Something went wrong with the request";
+                        break;
+                    case 500:
+                        console.log("Request status "+req.status);
+                        treeTextError.innerText = "Could not load the tree, try again later";
+                        break;
+                }
+            })
+        }
+        this.printTree = function() {
+
+        }
+    }
+
+    function NewCategoryForm() {
+        const form = document.getElementById("newCategoryForm");
+
+        this.init = function() {
+            form.addEventListener("submit",(e) => {
+                // new category process
+            });
+
         }
     }
 
