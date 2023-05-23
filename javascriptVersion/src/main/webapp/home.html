@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <script src="js/utils.js" charset="utf-8" defer></script>
+
+    <script src="js/homeManagement.js" charset="utf-8" defer></script>
+    <link href="css/home.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="treeContainer">
+        <ul id="rootTree"></ul>
+        <a href="#" class="copyToLink"> copia qui >>> </a>
+        <p id="treeTextError"></p>
+    </div>
+    <div class="formContainer">
+        <form id="newCategoryForm">
+            <input type="text" placeholder="name" id="newCategoryName" />
+            <select id="newCategoryParent"></select>
+            <input type="submit" value="create new category" />
+        </form>
+    </div>
+</body>
+</html>

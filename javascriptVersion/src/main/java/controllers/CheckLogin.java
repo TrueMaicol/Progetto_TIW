@@ -1,14 +1,14 @@
 package controllers;
 
 import beans.User;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import dao.UserDAO;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -40,13 +40,18 @@ public class CheckLogin extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        HttpSession session = request.getSession();
+        Gson gson = new Gson();
+        JsonObject jsonResponse = new JsonObject();
         boolean userError = false, pswError = false, inputError = false;
 
         String inputErrorText = "", path;
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
+        BufferedReader reader = request.getReader();
+        LoginRequest loginRequest = gson.fromJson(reader, LoginRequest.class);
+        String username = loginRequest.username;
+        String password = loginRequest.password;
+
+        System.out.println(username);
+        System.out.println(password);
         if(username == null || username.isBlank()) {
             userError = true;
             inputError = true;
@@ -59,18 +64,17 @@ public class CheckLogin extends HttpServlet {
         }
         // if there is an error with username or password
         if(inputError) {
-
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             if(userError && pswError)
                 inputErrorText = "Username and Password not set or blank";
 
-            session.setAttribute("userError", userError);
-            session.setAttribute("userError", pswError);
-            session.setAttribute("inputError", inputError);
-            session.setAttribute("inputErrorText", inputErrorText);
+            jsonResponse.addProperty("userError",userError);
+            jsonResponse.addProperty("pswError",pswError);
+            jsonResponse.addProperty("inputError",inputError);
+            jsonResponse.addProperty("inputErrorText",inputErrorText);
 
-            path = getServletContext().getContextPath();
-
-            response.sendRedirect(path);
+            response.getWriter().write(jsonResponse.toString());
+            response.getWriter().flush();
 
         } else {
             // if the username and password are ok, search for an occurrence
@@ -80,34 +84,34 @@ public class CheckLogin extends HttpServlet {
                 User result = userDAO.checkCredentials(username,password);
                 if(result == null) {
                     inputErrorText = "Username, Password combination is incorrect";
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-                    session.setAttribute("inputError", true);
-                    session.setAttribute("userError", true);
-                    session.setAttribute("pswError", true);
-                    session.setAttribute("inputErrorText", inputErrorText);
+                    jsonResponse.addProperty("userError",true);
+                    jsonResponse.addProperty("pswError",true);
+                    jsonResponse.addProperty("inputError",true);
+                    jsonResponse.addProperty("inputErrorText",inputErrorText);
 
-                    path = getServletContext().getContextPath();
-
-                    response.sendRedirect(path);
+                    response.getWriter().write(jsonResponse.toString());
+                    response.getWriter().flush();
 
                 } else {
-                    request.getSession().setAttribute("user",result);
-                    path = getServletContext().getContextPath() + "/GoToHome";
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    jsonResponse.addProperty("username",result.getUsername());
 
-                    response.sendRedirect(path);
-
+                    response.getWriter().write(jsonResponse.toString());
+                    response.getWriter().flush();
                 }
             } catch (SQLException e) {
                 inputErrorText = "Internal server error, try again later";
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 
-                session.setAttribute("inputError", false);
-                session.setAttribute("userError", false);
-                session.setAttribute("pswError", true);
-                session.setAttribute("inputErrorText", inputErrorText);
+                jsonResponse.addProperty("userError",false);
+                jsonResponse.addProperty("pswError",false);
+                jsonResponse.addProperty("inputError",true);
+                jsonResponse.addProperty("inputErrorText",inputErrorText);
 
-                path = getServletContext().getContextPath();
-
-                response.sendRedirect(path);
+                response.getWriter().write(jsonResponse.toString());
+                response.getWriter().flush();
 
             }
         }
@@ -115,6 +119,17 @@ public class CheckLogin extends HttpServlet {
     }
 
     public void destroy() {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private class LoginRequest {
+        public String username, password;
 
     }
 }

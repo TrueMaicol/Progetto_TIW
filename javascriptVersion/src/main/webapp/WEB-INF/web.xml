@@ -17,13 +17,16 @@
         <param-name>dbPassword</param-name>
         <param-value>Juventus05062001</param-value>
     </context-param>
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
     <filter>
         <filter-name>UserLogged</filter-name>
         <filter-class>filters.UserLogged</filter-class>
     </filter>
     <filter-mapping>
         <filter-name>UserLogged</filter-name>
-        <url-pattern>/GoToHome</url-pattern>
         <url-pattern>/CreateNewCategory</url-pattern>
+        <url-pattern>/CopySubTree</url-pattern>
     </filter-mapping>
 </web-app>
