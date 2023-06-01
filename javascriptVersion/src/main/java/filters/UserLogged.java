@@ -22,10 +22,11 @@ public class UserLogged implements Filter {
         HttpSession s = req.getSession();
 
         if(s.isNew() || s.getAttribute("user") == null) {
+            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            //res.setHeader("Location", loginPath);
             res.sendRedirect(loginPath);
             return;
         }
-
         chain.doFilter(request, response);
     }
 }

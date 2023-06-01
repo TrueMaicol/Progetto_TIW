@@ -13,16 +13,18 @@
 </head>
 <body>
     <div class="treeContainer">
-        <ul id="rootTree"></ul>
-        <a href="#" class="copyToLink"> copia qui >>> </a>
-        <p id="treeTextError"></p>
+        <div>
+            <ul id="rootTree" class="rootTreeNode"></ul>
+        </div>
+        <p id="treeTextError" class="textError"></p>
     </div>
     <div class="formContainer">
         <form id="newCategoryForm">
-            <input type="text" placeholder="name" id="newCategoryName" />
-            <select id="newCategoryParent"></select>
-            <input type="submit" value="create new category" />
+            <input type="text" placeholder="name" id="newCategoryName" class="newCategoryInput" required/>
+            <select id="newCategoryParent" class="newCategoryInput"></select>
+            <input type="submit" value="add new category" class="submitNewCategoryButton"/>
         </form>
+        <p id="newCategoryTextError" class="textError"></p>
     </div>
 </body>
 </html>

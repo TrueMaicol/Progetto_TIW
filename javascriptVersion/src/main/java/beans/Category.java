@@ -10,13 +10,13 @@ public class Category {
     private String name;
     private String num;
     private long parent;
-    private ArrayList<Category> children;
-    public Category(long ID_Category, String name, String num, long parent, ArrayList<Category> children) {
+    private ArrayList<Category> childrenList;
+    public Category(long ID_Category, String name, String num, long parent, ArrayList<Category> childrenList) {
         this.ID_Category = ID_Category;
         this.name = name;
         this.num = num;
         this.parent = parent;
-        this.children = children;
+        this.childrenList = childrenList;
     }
 
     public long getID_Category() {
@@ -38,12 +38,12 @@ public class Category {
     }
 
     public ArrayList<Category> getChildren() {
-        return children;
+        return childrenList;
     }
 
     public void addNewChildren(Category child) throws TooManyChildrenException {
-        if(this.children.size() == 9)
+        if(this.childrenList.size() == 9)
             throw new TooManyChildrenException("Destination would have too many children after add");
-        children.add(child);
+        childrenList.add(child);
     }
 }

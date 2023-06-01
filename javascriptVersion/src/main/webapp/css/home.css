@@ -1,3 +1,117 @@
-.copyToLink {
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+}
+
+body {
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    background-color: #3b3b3b;
+    color: white;
+}
+
+.rootTreeNode {
+    max-width: 57vw;
+}
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.formContainer > form {
+    display: flex;
+    flex-direction: column;
+    width: 30vw;
+    gap: 10px;
+}
+
+.inputContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+}
+
+.newCategoryInput {
+    height: 4vh;
+    font-size: 1rem;
+    border: 0;
+    outline: 0;
+    border-radius: 10px;
+    padding-left: 12px;
+}
+
+.submitNewCategoryButton {
+    height: 4vh;
+    font-size: 0.9rem;
+    width: 24vw;
+    padding: 1vh 2vw;
+    border: 2px solid white;
+    color: white;
+    outline: none;
+    border-radius: 13px;
+    background-color: #3b3b3b;
+    transition: background-color 0.3s linear;
+    margin: auto;
+}
+
+.submitNewCategoryButton:hover {
+    cursor: pointer;
+    background-color: #00b2ff;
+}
+
+.treeElement {
+    list-style: none;
+    margin-left: 10px;
+    padding-left: 5px;
+    margin-top: 5px;
+
+}
+
+.treeElementContent {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 9px;
+}
+
+#rootCopyTo {
     display: none;
+}
+
+.copyToLink {
+    text-decoration: none;
+    color: white;
+}
+
+.copyToLink:hover {
+    text-decoration-line: underline;
+    cursor: pointer;
+}
+
+.displayInputError {
+    border: 3px solid #ff0000;
+}
+
+.textError {
+    color: #ff2323;
+    font-size: 0.9rem;
+    margin-right: auto;
+    margin-left: auto;
+    display: none;
+    margin-top: 7px;
+}
+
+.renameElInput {
+    border: 0;
+    padding-left: 10px;
 }

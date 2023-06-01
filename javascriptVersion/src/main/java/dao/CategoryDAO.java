@@ -9,7 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class CategoryDAO {
 
@@ -203,13 +202,15 @@ public class CategoryDAO {
 
     /**
      * This method creates a category and puts it inside the tree
-     * @param name is the name of the new category
+     *
+     * @param name   is the name of the new category
      * @param parent is the ID_Category of the parent category
-     * @throws TooManyChildrenException is thrown if the choosen parent has too many children (max = 9)
+     * @return
+     * @throws TooManyChildrenException   is thrown if the choosen parent has too many children (max = 9)
      * @throws CategoryNotExistsException is thrown if there is no Category inside the dabatase with the ID_Category of the choosen parent
-     * @throws SQLException is thrown if an error occured when executing the query
+     * @throws SQLException               is thrown if an error occured when executing the query
      */
-    public void createCategory(String name, long parent) throws TooManyChildrenException, CategoryNotExistsException ,SQLException {
+    public Category createCategory(String name, long parent) throws TooManyChildrenException, CategoryNotExistsException ,SQLException {
         /* if the parent category does not exist countDirectChildrenOf(parent) should throw two exceptions:
             1. SQLException: the parent column is references an existing ID_Category (it is a foreign key)
             2. CategoryNotExistsException: the check query found no record for this specific ID_Category
@@ -232,6 +233,8 @@ public class CategoryDAO {
         createStatement.setString(2,num);
         createStatement.setLong(3,parent);
         createStatement.executeUpdate();
+
+        return this.getCategoryFromNum(num);
     }
 
     public void copySubTree(long ID_source, long ID_destination) throws SQLException, CategoryNotExistsException, TooManyChildrenException {
@@ -270,6 +273,21 @@ public class CategoryDAO {
         for(Category child : curr.getChildren()) {
             updateNum(child,curr);
         }
+    }
+
+    public Category renameCategoryById(long ID_Category, String newName) throws SQLException, CategoryNotExistsException {
+        String query = "UPDATE category SET name = ? WHERE ID_Category = ?";
+
+        //check if the requested category exists
+        Category temp = this.getCategoryFromId(ID_Category);
+
+        PreparedStatement updateQuery = conn.prepareStatement(query);
+        updateQuery.setString(1,newName);
+        updateQuery.setLong(2, ID_Category);
+        updateQuery.executeUpdate();
+
+        // return the update category
+        return this.getCategoryFromId(ID_Category);
     }
 
 }

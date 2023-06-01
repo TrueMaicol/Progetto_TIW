@@ -2,6 +2,7 @@ package controllers;
 
 import beans.Category;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import dao.CategoryDAO;
 import exceptions.CategoryNotExistsException;
 
@@ -36,7 +37,7 @@ public class GetTree extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         CategoryDAO categoryDAO = new CategoryDAO(conn);
         Gson gson = new Gson();
-
+        JsonObject jsonResponse = new JsonObject();
         try {
             Category tree = categoryDAO.getCategoryFromId(1);
             String jsonTree = gson.toJson(tree);
@@ -47,8 +48,16 @@ public class GetTree extends HttpServlet {
 
         } catch (SQLException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            jsonResponse.addProperty("textError", "Internal server error, could not load the tree, try again later!");
+
+            response.getWriter().write(jsonResponse.toString());
+            response.getWriter().flush();
         } catch (CategoryNotExistsException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            jsonResponse.addProperty("textError", "Internal server error, could not load the tree, try again later!");
+
+            response.getWriter().write(jsonResponse.toString());
+            response.getWriter().flush();
         }
     }
 
