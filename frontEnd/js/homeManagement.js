@@ -43,23 +43,35 @@ const temp = {
         }
     ]
 };
+/*
+console.log("LIST: \n");
+console.log(temp);
+const x = searchCategory(temp.childrenList,4);
+console.log(x);
+const y = JSON.parse(JSON.stringify(x));
+console.log(y);
+x.name = "test";
+console.log(x);
+console.log(y);
+console.log("LIST: \n");
+console.log(temp);
 
-console.log(temp, 6);
+temp.childrenList[0].childrenList.push(y);
+*/
 
-
+console.log(searchCategory(temp,1));
+console.log(searchCategory(temp,4));
 function searchCategory(categoryList, ID_Category) {
-    
-    for(let i=0; i<categoryList.length; i++) {
-        const curr = categoryList[i];
-        if(curr.ID_Category === ID_Category)
-            return curr;
-
-        if(curr.childrenList !== undefined && curr.childrenList.length > 0) { // if the list is undefined then 
-            const found = searchCategory(curr.childrenList,ID_Category);
+    if(categoryList.ID_Category === ID_Category)
+        return categoryList;
+    if(categoryList.childrenList !== undefined && categoryList.childrenList.length > 0)
+        for(let i=0; i<categoryList.childrenList.length; i++) {
+            const curr = categoryList.childrenList[i];
+            const found = searchCategory(curr,ID_Category);
             if (found)
                 return found;
+            
         }
-    }
 
     
 }
@@ -79,21 +91,33 @@ function findCategoryNode(rootList, ID_Category) {
 
 
 document.getElementById("perTest").addEventListener("click", (e) => {
-    const curr = e.target.closest("h1");
-    const text = curr.innerText;
-    const container = curr.parentElement;
+    handleClick(e);
+});
+
+function handleClick(e) {
+    var curr = e.target.closest("h1");
+    var text = curr.innerText;
+    var container = curr.parentElement;
 
     const newInput = document.createElement("input");
     newInput.type = "text";
     newInput.value = text;
-    newInput.addEventListener("blur", (ev) => {
-        container.removeChild(newInput);
-        curr.innerText = newInput.value;
-        container.appendChild(curr);
-        console.log("blur");
-    })
+    newInput.addEventListener("blur", handleBlur);
     
     container.removeChild(curr);
     container.appendChild(newInput);
     console.log("CLICKED");
-});
+}
+
+function handleBlur(ev) {
+    console.log(ev);
+    container.removeChild(newInput);
+    curr.innerText = newInput.value;
+    container.appendChild(curr);
+    console.log("blur");
+}
+
+
+function forTest() {
+    var curr, container, text;
+}

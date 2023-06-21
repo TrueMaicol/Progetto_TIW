@@ -17,8 +17,16 @@ body {
     color: white;
 }
 
+.treeContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .rootTreeNode {
     max-width: 57vw;
+    max-height: 50vh;
+    overflow: auto;
 }
 
 .formContainer {
@@ -107,11 +115,83 @@ body {
     font-size: 0.9rem;
     margin-right: auto;
     margin-left: auto;
-    display: none;
     margin-top: 7px;
+}
+
+.hide {
+    display: none !important;
+}
+
+.show {
+    display: block;
 }
 
 .renameElInput {
     border: 0;
     padding-left: 10px;
+}
+
+.modalContainer {
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modalCover {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    background-color: black;
+    opacity: 0.95;
+    z-index: 1;
+}
+
+.modal {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    padding: 3rem;
+    z-index: 2;
+    background-color: #151515;
+    border-radius: 10px;
+}
+
+.modalButton {
+    margin: auto;
+    border: 0;
+    outline: none;
+    height: min-content;
+    padding: 1rem;
+    border-radius: 15px;
+}
+
+.modalButton:hover .saveButton:hover{
+    cursor: pointer;
+}
+
+.saveButton {
+    border: 0;
+    outline: none;
+    height: min-content;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    display: none;
+}
+
+.confirm {
+    color: white;
+    background-color: #099109;
+}
+
+.cancel {
+    color: white;
+    background-color: red;
+}
+
+.textGreen {
+    color: green;
+    text-decoration: underline;
 }

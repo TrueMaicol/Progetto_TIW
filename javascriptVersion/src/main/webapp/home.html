@@ -16,7 +16,9 @@
         <div>
             <ul id="rootTree" class="rootTreeNode"></ul>
         </div>
-        <p id="treeTextError" class="textError"></p>
+
+        <button id="saveDragOperation" class="saveButton confirm">Save</button>
+        <p id="treeTextError" class="textError hide"></p>
     </div>
     <div class="formContainer">
         <form id="newCategoryForm">
@@ -24,7 +26,19 @@
             <select id="newCategoryParent" class="newCategoryInput"></select>
             <input type="submit" value="add new category" class="submitNewCategoryButton"/>
         </form>
-        <p id="newCategoryTextError" class="textError"></p>
+        <p id="newCategoryTextError" class="textError hide"></p>
     </div>
+    <div id="dragDropModal" class="hide modalContainer">
+        <div class="modalCover"></div>
+        <div class="modal">
+            <div>
+                <button id="confirmDragButton" class="modalButton confirm">Confirm</button>
+            </div>
+            <div>
+                <button id="cancelDragButton" class="modalButton cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
