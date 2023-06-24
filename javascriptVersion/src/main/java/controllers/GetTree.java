@@ -42,9 +42,9 @@ public class GetTree extends HttpServlet {
             Category tree = categoryDAO.getCategoryFromId(1);
             String jsonTree = gson.toJson(tree);
 
-            System.out.println("\nTREE:\n"+jsonTree);
             response.getWriter().write(jsonTree);
             response.getWriter().flush();
+            System.out.println("/GetTree");
 
         } catch (SQLException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -67,7 +67,13 @@ public class GetTree extends HttpServlet {
     }
 
     public void destroy() {
-
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

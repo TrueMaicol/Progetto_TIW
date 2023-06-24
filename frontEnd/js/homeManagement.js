@@ -57,10 +57,11 @@ console.log("LIST: \n");
 console.log(temp);
 
 temp.childrenList[0].childrenList.push(y);
-*/
 
 console.log(searchCategory(temp,1));
 console.log(searchCategory(temp,4));
+*/
+
 function searchCategory(categoryList, ID_Category) {
     if(categoryList.ID_Category === ID_Category)
         return categoryList;
@@ -91,8 +92,15 @@ function findCategoryNode(rootList, ID_Category) {
 
 
 document.getElementById("perTest").addEventListener("click", (e) => {
-    handleClick(e);
+    console.log(1);
 });
+
+
+document.getElementById("perTest").addEventListener("click", (e) => {
+    console.log(2);
+});
+
+
 
 function handleClick(e) {
     var curr = e.target.closest("h1");
@@ -121,3 +129,118 @@ function handleBlur(ev) {
 function forTest() {
     var curr, container, text;
 }
+
+
+function isAdmissible(node, ids = new Set(), nums = new Set()) {
+    if (ids.has(node.ID_Category) || nums.has(parseInt(node.num))) {
+        return false;
+    }
+    ids.add(node.ID_Category);
+    nums.add(parseInt(node.num));
+    for (let i=0; i<node.childrenList.length; i++) {
+        if(node.ID_Category !== node.childrenList[i].parent)
+            return false;
+        if (!isAdmissible(node.childrenList[i], ids, nums)) {
+            return false;
+        }
+    } 
+    return true;  
+}
+
+
+
+function contains(array, elem) {
+    if(array !== undefined && array.length > 0) {
+        for(var i=0; i<array.length; i++) {
+            const curr = array[i];
+            if(categoryEquals(curr,elem))
+                return curr;
+            }
+    }
+}
+
+function categoryEquals(x,y) {
+    if(x.ID_Category !== y.ID_Category || x.name !== y.name || x.num !== y.num || x.parent !== y.parent)
+        return false;
+    return true;
+}
+
+
+const x = [{
+    "ID_Category": 1,
+    "name": "root",
+    "num": "0",
+    "parent": 0,
+    "childrenList": [
+        {
+            "ID_Category": 2,
+            "name": "Materiali solidi",
+            "num": "1",
+            "parent": 1,
+            "childrenList": [
+                {
+                    "ID_Category": 3,
+                    "name": "Materiali inerti",
+                    "num": "11",
+                    "parent": 2,
+                    "childrenList": [
+                        {
+                            "ID_Category": 6,
+                            "name": "Inerti da edilizia",
+                            "num": "111",
+                            "parent": 3,
+                            "childrenList": []
+                        }
+                    ]
+                },
+                {
+                    "ID_Category": 4,
+                    "name": "Materiali ferrosi",
+                    "num": "12",
+                    "parent": 2,
+                    "childrenList": []
+                }
+            ]
+        },
+        {
+            "ID_Category": 5,
+            "name": "Materiali liquidi",
+            "num": "2",
+            "parent": 1,
+            "childrenList": []
+        }
+    ]
+},
+{
+    "ID_Category": 89,
+    "name": "Materiali liquidi",
+    "num": "90",
+    "parent": 1,
+    "childrenList": []
+}
+];
+
+
+const y = {
+    "ID_Category": 89,
+    "name": "Materiali liquidi",
+    "num": "90",
+    "parent": 1,
+    "childrenList": [{
+        "ID_Category": 91,
+        "name": "Materiali liquidi",
+        "num": "90",
+        "parent": 1,
+        "childrenList": []
+    }]
+};
+
+const z = [];
+
+x.push(y);
+z.push(y);
+console.log(x);
+console.log(z);
+y.childrenList.push({name: "ciaone"});
+console.log(x);
+console.log(z);

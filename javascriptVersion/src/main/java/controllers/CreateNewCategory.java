@@ -56,6 +56,7 @@ public class CreateNewCategory extends HttpServlet {
         response.setContentType("application/json");
         name = newCategoryRequest.name;
         parent = newCategoryRequest.parent;
+        System.out.println("/CreateNewCategory");
 
         boolean inputError = false, nameError = false, parentError = false;
         if(name == null || name.isBlank()) {
@@ -114,7 +115,6 @@ public class CreateNewCategory extends HttpServlet {
                 jsonResponse.addProperty("inputErrorNewCategory",true);
                 jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
             } finally {
-                System.out.println(jsonResponse.toString());
                 response.getWriter().flush();
                 response.getWriter().write(jsonResponse.toString());
                 response.getWriter().flush();
@@ -123,7 +123,13 @@ public class CreateNewCategory extends HttpServlet {
     }
 
     public void destroy() {
-
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private class NewCategoryRequest {

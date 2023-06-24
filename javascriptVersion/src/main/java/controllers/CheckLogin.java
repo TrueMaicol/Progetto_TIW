@@ -49,9 +49,8 @@ public class CheckLogin extends HttpServlet {
         LoginRequest loginRequest = gson.fromJson(reader, LoginRequest.class);
         String username = loginRequest.username;
         String password = loginRequest.password;
+        System.out.println("/CheckLogin");
 
-        System.out.println(username);
-        System.out.println(password);
         if(username == null || username.isBlank()) {
             userError = true;
             inputError = true;

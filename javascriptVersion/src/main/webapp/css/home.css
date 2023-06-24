@@ -17,16 +17,16 @@ body {
     color: white;
 }
 
-.treeContainer {
+.treeSection {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    width: auto;
 }
 
 .rootTreeNode {
     max-width: 57vw;
-    max-height: 50vh;
-    overflow: auto;
+    overflow-y: auto;
 }
 
 .formContainer {
@@ -178,7 +178,6 @@ body {
     height: min-content;
     padding: 0.5rem 1rem;
     border-radius: 15px;
-    display: none;
 }
 
 .confirm {

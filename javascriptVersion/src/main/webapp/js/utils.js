@@ -17,18 +17,28 @@ function makeCall(method, url, data, callback) {
  * @param ID_Category the ID of the object to be retrieved.
  * @returns {*} if it exists return the object with the given ID_Category
  */
-function searchCategory(categoryList, ID_Category) {
-    for(var i=0; i<categoryList.length; i++) {
-        const curr = categoryList[i];
-        if(curr.ID_Category === ID_Category)
-            return curr;
-
-        if(curr.childrenList !== undefined && curr.childrenList.length > 0) { // if the list is undefined then
-            const found = searchCategory(curr.childrenList,ID_Category);
+function searchCategoryById(categoryList, ID_Category) {
+    if(categoryList.ID_Category === ID_Category)
+        return categoryList;
+    if(categoryList.childrenList !== undefined && categoryList.childrenList.length > 0)
+        for(let i=0; i<categoryList.childrenList.length; i++) {
+            const curr = categoryList.childrenList[i];
+            const found = searchCategoryById(curr,ID_Category);
             if (found)
                 return found;
         }
-    }
+}
+
+function searchCategoryByNum(categoryList, num) {
+    if(categoryList.num === num)
+        return categoryList;
+    if(categoryList.childrenList !== undefined && categoryList.childrenList.length > 0)
+        for(let i=0; i<categoryList.childrenList.length; i++) {
+            const curr = categoryList.childrenList[i];
+            const found = searchCategoryById(curr,ID_Category);
+            if (found)
+                return found;
+        }
 }
 
 /**
@@ -59,17 +69,17 @@ function categoryEquals(x,y) {
     return true;
 }
 
-function isCopyPossible(destination, subtree) {
-    if(destination.childrenList === undefined || destination.childrenList.length + subtree.childrenList.length <= 9)
+function isCopyPossible(subtree, destination) {
+    if(destination.childrenList === undefined || destination.childrenList.length + 1 <= 9)
         return true;
-    else false;
+    return false;
 }
 
 function updateCategoryProperties(elem, parent) {
 
     console.log(parent.childrenList.indexOf(elem) + 1);
     console.log(parent.childrenList);
-    const newNum = parent.num === 0 ? (parent.childrenList.indexOf(elem) + 1).toString() : parent.num.toString() + parseInt(parent.childrenList.indexOf(elem) + 1).toString();
+    const newNum = parent.num === "0" ? (parseInt(parent.childrenList.indexOf(elem)) + 1).toString() : parent.num.toString() + parseInt(parent.childrenList.indexOf(elem) + 1).toString();
     console.log(newNum);
 
     elem.num = newNum.toString();
@@ -79,4 +89,45 @@ function updateCategoryProperties(elem, parent) {
         elem.childrenList[i] = updateCategoryProperties(elem.childrenList[i], elem);
     }
     return elem;
+}
+
+function isTreeValid(node,parentID, ids = new Set(), nums = new Set()) {
+    if (ids.has(node.ID_Category) || nums.has(parseInt(node.num)) || node.parent !== parentID) {
+        return false;
+    }
+    ids.add(node.ID_Category);
+    nums.add(parseInt(node.num));
+    for (let i=0; i<node.childrenList.length; i++) {
+        if(node.ID_Category !== node.childrenList[i].parent)
+            return false;
+        if (!isTreeValid(node.childrenList[i],node.ID_Category, ids, nums)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function isStringBlank(str) {
+    return str === undefined || str.trim().length === 0;
+}
+
+function contains(array, elem) {
+    if(array !== undefined && array.length > 0) {
+        for(var i=0; i<array.length; i++) {
+            const curr = array[i];
+            if(categoryEquals(curr,elem))
+                return true;
+        }
+        return false;
+    }
+}
+
+function findCategoryInNew(array, ID_Category) {
+    if(array !== undefined && array.length === 0) {
+        for(var i=0; i<array.length; i++) {
+            const curr = array[i];
+            if(curr.ID_Category === ID_Category)
+                return curr;
+        }
+    }
 }

@@ -13,8 +13,14 @@ import java.util.ArrayList;
 public class CategoryDAO {
 
     private Connection conn;
+    private Category serverTree;
     public CategoryDAO(Connection conn) {
         this.conn = conn;
+        try {
+            this.serverTree = this.getCategoryFromId(1);
+        } catch (SQLException | CategoryNotExistsException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ArrayList<Category> getTopCategories() throws SQLException, CategoryNotExistsException {
@@ -240,30 +246,36 @@ public class CategoryDAO {
     public void copySubTree(long ID_source, long ID_destination) throws SQLException, CategoryNotExistsException, TooManyChildrenException {
         String num,query;
         int currentNumDestinationChildren = this.countDirectChildrenOf(ID_destination);
-        int directSourceChildren = this.countDirectChildrenOf(ID_source);
-        if(currentNumDestinationChildren + directSourceChildren > 9)
+        //int directSourceChildren = this.countDirectChildrenOf(ID_source);
+        if(currentNumDestinationChildren + 1 > 9)
             throw new TooManyChildrenException("Impossible to copy the selected sub tree. The resulting tree would have to many children");
         Category source, destination;
         ArrayList<Category> children;
         source = this.getCategoryFromId(ID_source);
         destination = this.getCategoryFromId(ID_destination);
         destination.addNewChildren(source);
-        updateNum(source, destination);
+        insertCategoryWithChildren(source, destination);
     }
 
-    private void updateNum(Category curr, Category parent) throws SQLException, CategoryNotExistsException {
+    /**
+     * Recursive function to insert each category of a subtree as a children of the parent. First call is sourceTree, destinationParent
+     * @param curr
+     * @param parent
+     * @throws SQLException
+     * @throws CategoryNotExistsException
+     */
+    public void insertCategoryWithChildren(Category curr, Category parent) throws SQLException, CategoryNotExistsException {
         //update curr
         String num, query;
         query = "INSERT INTO category(name,num,parent) VALUES (?,?,?)";
         PreparedStatement copyStatement = conn.prepareStatement(query);
-        int currentParentNumChildren = this.countDirectChildrenOf(parent.getNum());
 
-        if(parent.getNum().equals("0"))
-            num = Integer.toString(currentParentNumChildren + 1);
-        else
-            num = parent.getNum() + Integer.toString(currentParentNumChildren + 1);
-
+        // check if the given parent actually exists
         Category newParent = this.getCategoryFromNum(parent.getNum());
+        if(newParent.getNum().equals("0"))
+            num = Integer.toString(newParent.getChildren().size() + 1);
+        else
+            num = parent.getNum() + Integer.toString(newParent.getChildren().size() + 1);
         curr.setNum(num);
         copyStatement.setString(1,curr.getName());
         copyStatement.setString(2,curr.getNum());
@@ -271,7 +283,7 @@ public class CategoryDAO {
         copyStatement.executeUpdate();
 
         for(Category child : curr.getChildren()) {
-            updateNum(child,curr);
+            insertCategoryWithChildren(child,curr);
         }
     }
 
@@ -288,6 +300,19 @@ public class CategoryDAO {
 
         // return the update category
         return this.getCategoryFromId(ID_Category);
+    }
+
+    /**
+     * Check if two categories are equals beside their children
+     * @param x first category to check
+     * @param y second category to check
+     * @return true if x and y have the same ID, name, num and parent
+     */
+    private boolean equalsCategory(Category x, Category y) {
+        if(x.getID_Category() != y.getID_Category() || !x.getNum().equals(y.getNum()) || !x.getName().equals(y.getName()) ||
+           x.getParent() != y.getParent())
+            return false;
+        return true;
     }
 
 }
