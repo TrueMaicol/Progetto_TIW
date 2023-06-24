@@ -244,8 +244,8 @@ public class CategoryDAO {
     public void copySubTree(long ID_source, long ID_destination) throws SQLException, CategoryNotExistsException, TooManyChildrenException {
         String num,query;
         int currentNumDestinationChildren = this.countDirectChildrenOf(ID_destination);
-        int directSourceChildren = this.countDirectChildrenOf(ID_source);
-        if(currentNumDestinationChildren + directSourceChildren > 9)
+        //int directSourceChildren = this.countDirectChildrenOf(ID_source);
+        if(currentNumDestinationChildren + 1 > 9)
             throw new TooManyChildrenException("Impossible to copy the selected sub tree. The resulting tree would have to many children");
         Category source, destination;
         ArrayList<Category> children;
