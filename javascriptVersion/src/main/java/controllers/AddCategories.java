@@ -38,29 +38,7 @@ public class AddCategories extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        String from, to, path;
-        Category fromCategory, toCategory;
-        CategoryDAO categoryDAO = new CategoryDAO(conn);
-        from = request.getParameter("from");
-        to = request.getParameter("to");
 
-        try {
-            categoryDAO.copySubTree(Long.parseLong(from),Long.parseLong(to));
-        } catch (NumberFormatException e) {
-            session.setAttribute("inputErrorCopySubTree", true);
-            session.setAttribute("inputErrorTextCopySubTree","Could not identify which sub tree to copy");
-        } catch (CategoryNotExistsException | TooManyChildrenException e) {
-            session.setAttribute("inputErrorCopySubTree", true);
-            session.setAttribute("inputErrorTextCopySubTree",e.getMessage());
-        } catch (SQLException e) {
-            session.setAttribute("inputErrorCopySubTree", true);
-            session.setAttribute("inputErrorTextCopySubTree","Internal server error, try again later");
-        } finally {
-            path = getServletContext().getContextPath() + "/GoToHome";
-
-            response.sendRedirect(path);
-        }
     }
 
     @Override
@@ -72,11 +50,17 @@ public class AddCategories extends HttpServlet {
         AddCategoriesRequest[] addRequest = gson.fromJson(reader, AddCategoriesRequest[].class);
         response.setContentType("application/json");
         System.out.println("/AddCategories");
+
         for(AddCategoriesRequest curr : addRequest) {
             try {
                 Category elem = buildCategoryFromRequest(curr);
+                /*
+                Even though all the categories we are trying to add via this servlet have fake ids the first parent for each set of category has an id that is true!
+                If for some reason it happens that a parent is not found then it is thrown a CategoryNotExistsException.
+                We are also ensured that the tree we are adding to the database is valid in terms of number of children, this happens with the buildCategoryFromRequest method.
+                 */
                 Category parent = categoryDAO.getCategoryFromId(elem.getParent());
-                categoryDAO.insertCategoryWithChildren(elem, parent);
+                categoryDAO.copySubTree(elem, parent);
             } catch (TooManyChildrenException e) {
                 jsonResponse.addProperty("textError", "Too many children!");
 

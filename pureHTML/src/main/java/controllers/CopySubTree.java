@@ -38,14 +38,22 @@ public class CopySubTree extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
-        String from, to, path;
+        Long from, to;
+        String path;
         Category fromCategory, toCategory;
         CategoryDAO categoryDAO = new CategoryDAO(conn);
-        from = request.getParameter("from");
-        to = request.getParameter("to");
+        from = Long.parseLong(request.getParameter("from"));
+        to = Long.parseLong(request.getParameter("to"));
+
+        if(from.equals(to)) {
+            session.setAttribute("inputErrorCopySubTree", true);
+            session.setAttribute("inputErrorTextCopySubTree","Can't copy a category to itself");
+            path = getServletContext().getContextPath() + "/GoToHome";
+            response.sendRedirect(path);
+        }
 
         try {
-            categoryDAO.copySubTree(Long.parseLong(from),Long.parseLong(to));
+            categoryDAO.copySubTree(from,to);
         } catch (NumberFormatException e) {
             session.setAttribute("inputErrorCopySubTree", true);
             session.setAttribute("inputErrorTextCopySubTree","Could not identify which sub tree to copy");
