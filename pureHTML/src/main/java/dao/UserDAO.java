@@ -16,7 +16,7 @@ public class UserDAO {
         this.conn = conn;
     }
 
-    public ArrayList<User> getAllUsers() {
+    private ArrayList<User> getAllUsers() {
         ArrayList<User> users = new ArrayList<>();
         String query = "select ID_User,username from user";
         try {

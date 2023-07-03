@@ -15,12 +15,16 @@
     });
 
 
-
+    /**
+     * Page manager
+     */
     function PageManager() {
-        var currentMode = Modes.ONLINE;
+        this.currentMode = Modes.ONLINE;
+        /**
+         * Start the page
+         */
         this.start = function() {
             var self = this;
-            // start all the listener to the objects
             categoryTree = new CategoryTree();
             newCategoryForm = new NewCategoryForm();
             newCategoryForm.init();
@@ -31,48 +35,62 @@
                 self.resetErrors();
             })
         };
-
+        /**
+         * Set page mode to LOCAL and refresh the page
+         * @param categoryList the list to display
+         */
         this.setModeToLocal = (categoryList) => {
             var self = this;
-            currentMode = Modes.LOCAL;
+            self.currentMode = Modes.LOCAL;
             self.refresh(categoryList);
         }
-
+        /**
+         * Set page mode to ONLINE and refresh the page
+         * @param categoryList the list to display
+         */
         this.setModeToOnline = (categoryList) => {
             var self = this;
-            currentMode = Modes.ONLINE;
+            self.currentMode = Modes.ONLINE;
             self.refresh(categoryList);
         }
-
+        /**
+         * Refresh the page keeping the same mode
+         * @param categoryList
+         */
         this.refresh = (categoryList) => {
-            if(currentMode === Modes.ONLINE) {
+            var self = this;
+            if(self.currentMode === Modes.ONLINE) {
                 categoryTree.refreshOnline(categoryList);
                 newCategoryForm.refreshOnline(categoryList);
-            } else if(currentMode === Modes.LOCAL) {
+            } else if(self.currentMode === Modes.LOCAL) {
                 categoryTree.refreshLocal(categoryList);
                 newCategoryForm.refreshLocal(categoryList);
 
             }
         }
-
+        /**
+         * Reset all the errors of the page
+         */
         this.resetErrors = function() {
             categoryTree.resetError();
             newCategoryForm.resetError();
         }
     }
 
+    /**
+     * CategoryTree component
+     */
     function CategoryTree() {
 
         const rootList = document.getElementById("rootTree");
         const treeTextError = document.getElementById("treeTextError");
         const dragDropModal = document.getElementById("dragDropModal");
         const saveDragButton = document.getElementById("saveDragOperation");
-        var newCategories = [], renamedCategories = [];
+        var newCategories = [], renamedCategories = [], currentTree = {}, options = [];
         let draggedElement;
-
         this.categoryList = {};
         /**
-         * initialize the CategoryTree component
+         * gets the category tree from the server, saves it locally and displays the content on the page
          */
         this.init = function() {
             let self = this;
@@ -97,7 +115,7 @@
         }
 
         /**
-         * Insert a new category in the local tree
+         * Inserts a new category in the local tree
          * @param newCategory the new category to be put in the local tree
          */
         this.insertNewCategory = function(newCategory) {
@@ -116,8 +134,9 @@
             var self = this;
             // the parent element is the HTMLElement of the parent in which we have to create the new nested list if parent has any children
             const currentElementLi = document.createElement("li");
-            const currentElementNum = document.createElement("h3");
-            const currentElementName = document.createElement("h3");
+            const currentElementText = document.createElement("h3");
+            /*const currentElementNum = document.createElement("h3");
+            const currentElementName = document.createElement("h3");*/
             const currentElementDiv = document.createElement("div");
             currentElementDiv.classList.add("treeElementContent");
 
@@ -127,17 +146,22 @@
             currentElementDiv.addEventListener("dragleave",dragLeave);
             currentElementDiv.addEventListener("drop",drop);
             currentElementDiv.addEventListener("dragend",deleteRootNode);
-            currentElementNum.innerText = curr.num + " ";
+
+            currentElementText.addEventListener("click",clickCallback);
+            currentElementText.innerText = curr.num + " " + curr.name;
+            /*currentElementNum.innerText = curr.num + " ";
             currentElementName.innerText = curr.name;
-            currentElementLi.classList.add("treeElement");
+            currentElementName.addEventListener("click",clickCallback);
             currentElementDiv.appendChild(currentElementNum);
             currentElementDiv.appendChild(currentElementName);
+            */
+            currentElementLi.classList.add("treeElement");
+            currentElementDiv.appendChild(currentElementText);
             currentElementLi.appendChild(currentElementDiv);
             parentNode.appendChild(currentElementLi);
 
             currentElementLi.setAttribute("idcategory",curr.ID_Category);
             currentElementLi.setAttribute("idparent", curr.parent);
-            currentElementName.addEventListener("click",clickCallback);
 
             if(curr.childrenList.length > 0) {
                 const childrenList = document.createElement("ul");
@@ -147,9 +171,13 @@
                     self.printTreeElement(x,childrenList,clickCallback);
                 });
             }
-
         }
 
+        /**
+         * Used to refresh the tree with the saved tree
+         * @param list the tree to display
+         * @param clickCallback the callback to call when an element of the tree is clicked
+         */
         this.refreshTree = function(list, clickCallback) {
             var self = this;
             rootList.innerHTML = ""; // empty the tree
@@ -158,80 +186,107 @@
                 self.printTreeElement(curr,rootList, clickCallback);
             });
         }
+        /**
+         * Reset to default all the errors of the component
+         */
         this.resetError = function() {
             treeTextError.classList.remove("show");
             treeTextError.classList.add("hide");
             treeTextError.innerText = "";
         }
+        /**
+         * Set a new error so that the user can understand what is happening
+         * @param textError the text to display to the user as an error
+         */
         this.setError = function(textError) {
             treeTextError.classList.remove("hide");
             treeTextError.classList.add("show");
             treeTextError.innerText = textError;
         }
+        /**
+         * Callback to handle the click event of an element of the tree to rename a category right away
+         * @param e the click event that was triggered
+         */
         var renameCategoryOnline = (e) => {
             e.stopPropagation();
             var self = this;
+
+            const currentTree = buildTreeFromHTML(rootList);
 
             if(!checkTreeIDs(self.categoryList,rootList)) {
                 self.setError("The tree was corrupted, try again");
                 pageManager.refresh(self.categoryList);
                 return;
             }
-                const clickedElement = e.target.closest("h3");
-                const currText = clickedElement.innerText;
-                const elementContainer = clickedElement.parentElement;
-                const newInput = document.createElement("input");
-                newInput.type = "text";
-                newInput.value = currText;
+            const clickedElement = e.target.closest("h3");
+            const [num, ...name] = clickedElement.innerText.split(" ");
+            const currText = name.join(" ");
+            const elementContainer = clickedElement.parentElement;
+            const currNum = document.createElement("h3");
+            currNum.innerText = num;
+            elementContainer.classList.add("renaming");
+            const newNameInput = document.createElement("input");
+            newNameInput.type = "text";
+            newNameInput.value = currText;
 
-                elementContainer.removeChild(clickedElement);
-                elementContainer.appendChild(newInput);
+            elementContainer.removeChild(clickedElement);
+            elementContainer.appendChild(currNum);
+            elementContainer.appendChild(newNameInput);
 
-                newInput.focus();
-                elementContainer.draggable = false;
+            newNameInput.focus();
+            elementContainer.draggable = false;
 
-
-                newInput.addEventListener("blur", function(ev) {
-                    ev.stopPropagation();
-                    const newText = newInput.value;
-                    const ID_Category = elementContainer.parentElement.getAttribute("idcategory");
-
-                    if(!checkTreeIDs(self.categoryList,rootList)) {
-                        self.setError("The tree was corrupted, try again");
-                        pageManager.refresh(self.categoryList);
-                    } else if(isRoot(parseFloat(ID_Category))) {
-                        self.setError("Can't rename the root category!");
-                        pageManager.refresh(self.categoryList);
-                    } else if(isStringBlank(newText)) {
-                        self.setError("The new name is blank!");
-                        pageManager.refresh(self.categoryList);
-                    } else {
-                        let data = {
-                            categories: [{
-                                    ID_Category: ID_Category,
-                                    name: newText
-                                }],
-                            mode: "ID"
-                        };
-                        makeCall("POST","RenameCategory",JSON.stringify(data),function(req) {
-                            const response = JSON.parse(req.responseText);
-                            switch (req.status) {
-                                case 200:
-                                    const selectedCategory = searchCategoryById(categoryTree.categoryList, response.ID_Category);
-                                    selectedCategory.name = response.name;
-                                    pageManager.refresh(self.categoryList);
-                                    break;
-                                case 400:
-                                case 401:
-                                case 500:
-                                    self.setError(response.textError);
-                                    pageManager.refresh(self.categoryList);
-                                    break;
-                            }
-                        })
-                    }
-                })
+            newNameInput.addEventListener("blur", function sendServer(ev) {
+                ev.stopPropagation();
+                const newName = newNameInput.value;
+                const ID_Category = elementContainer.parentElement.getAttribute("idcategory");
+                const curr = parseFloat(searchCategoryById(self.categoryList, ID_Category));
+                if(curr.name === newName)
+                    pageManager.refresh(self.categoryList);
+                if(!checkTreeIDs(self.categoryList,rootList)) {
+                    self.setError("The tree was corrupted, try again");
+                    pageManager.refresh(self.categoryList);
+                } else if(isRoot(parseFloat(ID_Category))) {
+                    self.setError("Can't rename the root category!");
+                    pageManager.refresh(self.categoryList);
+                } else if(isStringBlank(newName)) {
+                    self.setError("The new name is blank!");
+                    pageManager.refresh(self.categoryList);
+                } else {
+                    let data = {
+                        dataToCheck: {
+                            clientTree: currentTree,
+                            options: buildListFromOptions(document.getElementsByClassName("newCategoryInput")[1])
+                        },
+                        renamed: {
+                            ID_Category: ID_Category,
+                            name: newName
+                        },
+                    };
+                    makeCall("POST","RenameCategory",JSON.stringify(data),function(req) {
+                        const response = JSON.parse(req.responseText);
+                        switch (req.status) {
+                            case 200:
+                                const selectedCategory = searchCategoryById(categoryTree.categoryList, response.ID_Category);
+                                selectedCategory.name = response.name;
+                                pageManager.refresh(self.categoryList);
+                                break;
+                            case 400:
+                            case 401:
+                            case 403:
+                            case 500:
+                                self.setError(response.textError);
+                                pageManager.refresh(self.categoryList);
+                                break;
+                        }
+                    })
+                }
+            })
         }
+        /**
+         * Callback to handle the click event of an element of the tree to rename a category in local mode
+         * @param e the click event that was triggered
+         */
         var renameCategoryLocal = (e) => {
             e.stopPropagation();
             var self = this;
@@ -242,48 +297,55 @@
                 return;
             }
 
-                const clickedElement = e.target.closest("h3");
-                const currText = clickedElement.innerText;
-                const elementContainer = clickedElement.parentElement;
-                const newInput = document.createElement("input");
-                newInput.type = "text";
-                newInput.value = currText;
+            const clickedElement = e.target.closest("h3");
+            const [num, ...name] = clickedElement.innerText.split(" ");
+            const currText = name.join(" ");
+            const elementContainer = clickedElement.parentElement;
+            const currNum = document.createElement("h3");
+            currNum.innerText = num;
+            elementContainer.classList.add("renaming");
+            const newNameInput = document.createElement("input");
+            newNameInput.type = "text";
+            newNameInput.value = currText;
 
-                elementContainer.removeChild(clickedElement);
-                elementContainer.appendChild(newInput);
+            elementContainer.removeChild(clickedElement);
+            elementContainer.appendChild(currNum);
+            elementContainer.appendChild(newNameInput);
 
-                newInput.focus();
-                elementContainer.draggable = false;
-                newInput.addEventListener("blur", function(ev) {
-                    ev.stopPropagation();
-                    const newText = newInput.value;
-                    const ID_Category = parseFloat(elementContainer.parentElement.getAttribute("idcategory"));
+            newNameInput.focus();
+            elementContainer.draggable = false;
+            newNameInput.addEventListener("blur", function addToRenamed(ev) {
+                ev.stopPropagation();
+                const newName = newNameInput.value;
+                const ID_Category = parseFloat(elementContainer.parentElement.getAttribute("idcategory"));
 
-                    if(!checkTreeIDs(self.categoryList,rootList)) {
-                        self.setError("The tree was corrupted, try again");
-                        pageManager.refresh(self.categoryList);
-                    } else if(isRoot(ID_Category)) {
-                        self.setError("Can't rename the root category!");
-                        pageManager.refresh(self.categoryList);
-                    } else if(isStringBlank(newText)) {
-                        self.setError("The new name is blank!");
-                        pageManager.refresh(self.categoryList);
-                    } else {
-                        const category = searchCategoryById(self.categoryList, ID_Category);
-                        if(category.name !== newText) {
-                            category.name = newText;
-                            if(!contains(newCategories,category))
-                                if(!contains(renamedCategories,category))
-                                    renamedCategories.push(category);
-                        }
-                        pageManager.refresh(self.categoryList);
+                if(!checkTreeIDs(self.categoryList,rootList)) {
+                    self.setError("The tree was corrupted, try again");
+                    pageManager.refresh(self.categoryList);
+                } else if(isRoot(ID_Category)) {
+                    self.setError("Can't rename the root category!");
+                    pageManager.refresh(self.categoryList);
+                } else if(isStringBlank(newName)) {
+                    self.setError("The new name is blank!");
+                    pageManager.refresh(self.categoryList);
+                } else {
+                    const category = searchCategoryById(self.categoryList, ID_Category);
+                    if(category.name !== newName) {
+                        category.name = newName;
+                        if(!contains(newCategories,category))
+                            if(!contains(renamedCategories,category))
+                                renamedCategories.push(category);
                     }
-                })
-
-
+                    pageManager.refresh(self.categoryList);
+                }
+            })
         }
-
-        this.showDragDropModal = function(source,destination) {
+        /**
+         * Function to display and handle the modal to confirm or cancel the drag and drop that was just made
+         * @param source the source category of drag and drop
+         * @param destination the destination category of the drag and drop
+         */
+        var showDragDropModal = (source,destination) => {
             var self = this;
             // show the drag and drop modal
             dragDropModal.classList.remove("hide");
@@ -293,28 +355,41 @@
             const cancelButton = dragDropModal.querySelector(".cancel");
 
             confirmButton.addEventListener("click",function confirmCallback() {
-
+                currentTree = buildTreeFromHTML(rootList);
+                options = buildListFromOptions(document.getElementsByClassName("newCategoryInput")[1]);
                 copySubTree(source,destination);
                 pageManager.setModeToLocal(self.categoryList);
-                self.hideDragDropModal();
-                self.showSaveButton();
+                hideDragDropModal();
+                showSaveButton();
                 confirmButton.removeEventListener("click",confirmCallback);
             });
             cancelButton.addEventListener("click", function cancelCallback() {
                 pageManager.refresh(self.categoryList);
-                self.hideDragDropModal();
+                hideDragDropModal();
                 cancelButton.removeEventListener("click",cancelCallback);
             })
         }
-
-        this.hideDragDropModal = function() {
+        /**
+         * Hide from the user the drag and drop modal
+         */
+        var hideDragDropModal = function() {
             dragDropModal.classList.remove("show");
             dragDropModal.classList.add("hide");
         }
-        function dragStart(e) {
+
+        /**
+         * Function to handle the start of a drag and drop process
+         * @param e the dragstart event that was triggered
+         */
+        var dragStart = function(e) {
             draggedElement = e.target.closest(".treeElementContent");
             createRootNode();
         }
+
+        /**
+         * Function to handle the dragover event of the drag and drop process
+         * @param e the dragover event that was triggered
+         */
         var dragOver = (e) => {
             var self = this;
             e.preventDefault()
@@ -326,11 +401,20 @@
             if(!isChildrenOf(source, destination) && isCopyPossible(source,destination))
                 draggedOn.classList.add("textGreen");
         }
-        function dragLeave(e) {
+
+        /**
+         * Function to handle the dragleave event of the drag and drop process
+         * @param e the dragleave event that was triggered
+         */
+        var dragLeave = function(e) {
             const draggedOn = e.target.closest(".treeElementContent");
             draggedOn.classList.remove("textGreen");
         }
 
+        /**
+         * Function to handle the drop event of the drag and drop process
+         * @param e the drop event that was triggered
+         */
         var drop = (e) => {
             var self = this;
             const draggedOn = e.target.closest(".treeElementContent");
@@ -339,6 +423,9 @@
 
             draggedOn.classList.remove("textGreen");
 
+            /*if(pageManager.currentMode === Modes.ONLINE)
+                currentTree = buildTreeFromHTML(rootList);
+            */
             if(!checkTreeIDs(self.categoryList,rootList) || !isTreeValid(categoryTree.categoryList,0)) {
                 self.setError("The tree was corrupted, try again");
                 pageManager.refresh(self.categoryList);
@@ -349,11 +436,15 @@
             } else if(!isCopyPossible(source,destination)) {
                 self.setError("The destination parent would have too many children!");
             } else {
-                self.showDragDropModal(source,destination);
+                showDragDropModal(source,destination);
             }
 
         }
-
+        /**
+         * Copy a source category to a destination category
+         * @param source object of the source category
+         * @param destination object of the destination category
+         */
         var copySubTree = (source,destination) => {
             var self = this;
             if(categoryEquals(source,destination)) {
@@ -365,7 +456,10 @@
                 self.addCategoryToNew(sourceCopy);
             }
         }
-
+        /**
+         * Add a category to the local list of new categories
+         * @param elem the object of the category to be added
+         */
         this.addCategoryToNew = (elem) => {
             var self = this;
 
@@ -376,7 +470,9 @@
             }
 
         }
-
+        /**
+         * Function used to create the html to represent the root element during a drag and drop
+         */
         var createRootNode = () => {
             const treeSection = document.getElementsByClassName("treeSection")[0];
             const treeContainer = document.getElementsByClassName("treeContainer")[0];
@@ -394,81 +490,81 @@
             treeSection.insertBefore(div, treeContainer);
 
         };
-
+        /**
+         * Remove the root node from the DOM
+         */
         var deleteRootNode = () => {
             const rootNode = document.querySelector(".copyInRoot");
             rootNode.remove();
         }
-
+        /**
+         * Refresh the component in ONLINE mode
+         * @param categoryList the list to display
+         */
         this.refreshOnline = (categoryList) => {
             var self = this;
             self.refreshTree(categoryList,renameCategoryOnline);
         }
-
+        /**
+         * Refresh the component in LOCAL mode
+         * @param categoryList the list to display
+         */
         this.refreshLocal = (categoryList) => {
             var self = this;
             self.refreshTree(categoryList,renameCategoryLocal);
         }
-
-        this.showSaveButton = () => {
+        /**
+         * Show the save button to save the changes made in LOCAL mode
+         */
+        var showSaveButton = () => {
             saveDragButton.classList.remove("hide");
             saveDragButton.classList.add("show");
         }
-
-        this.hideSaveButton = () => {
+        /**
+         * Hide the save button
+         */
+        var hideSaveButton = () => {
             saveDragButton.classList.remove("show");
             saveDragButton.classList.add("hide");
         }
-
+        /**
+         * Function to handle the click of the save button. Saves the local changes on the server
+         */
         var handleSaveButtonClick = () => {
             var self = this;
-
-
 
             if(!checkTreeIDs(self.categoryList,rootList) || !isTreeValid(categoryTree.categoryList,0)) {
                 self.setError("The tree was corrupted, try again");
                 pageManager.refresh(self.categoryList);
             }
 
-            makeCall("POST","AddCategories",JSON.stringify(newCategories),function(req) {
+            currentTree = buildTreeFromHTML(rootList);
 
+            let data = {
+                dataToCheck: {
+                    clientTree: currentTree,
+                    options: options
+                },
+                newCategories: newCategories,
+                renamedCategories: renamedCategories
+            }
+
+
+            makeCall("POST","ApplyChanges",JSON.stringify(data),function(req) {
+                console.log(req.responseText);
                 const response = JSON.parse(req.responseText);
                 switch (req.status) {
                     case 200:
-                        if(renamedCategories.length > 0) {
+                        self.init();
+                        pageManager.setModeToOnline(self.categoryList);
+                        newCategories = [];
+                        renamedCategories = [];
 
-                            let data = {
-                                categories: renamedCategories,
-                                mode: "NUM"
-                            }
-
-                            makeCall("POST","RenameCategory",JSON.stringify(data),function(req) {
-                                const response = JSON.parse(req.responseText);
-                                switch (req.status) {
-                                    case 200:
-                                        pageManager.setModeToOnline(self.categoryList);
-                                        newCategories = [];
-                                        renamedCategories = [];
-                                        break;
-                                    case 400:
-                                    case 403:
-                                    case 500:
-                                        self.init();
-                                        self.setError(response.textError);
-                                        break;
-                                }
-                            });
-                        } else {
-                            self.init();
-                            pageManager.setModeToOnline(self.categoryList);
-                            newCategories = [];
-                            renamedCategories = [];
-                        }
                         break;
                     case 400:
                     case 403:
                     case 500:
-                        self.setError("There has been an error during the save of the changes!");
+                        self.setError(response.textError);
                         self.init();
                         pageManager.setModeToOnline(self.categoryList);
                         newCategories = [];
@@ -476,7 +572,7 @@
                         break;
                 }
             })
-            self.hideSaveButton();
+            hideSaveButton();
         }
     }
 
@@ -485,6 +581,9 @@
         const nameInput = document.getElementsByClassName("newCategoryInput")[0];
         const parentInput = document.getElementsByClassName("newCategoryInput")[1];
         const textError = document.querySelector("#newCategoryTextError");
+        /**
+         * Initializes the NewCategoryForm component. Does not handle the options of the select element in the form
+         */
         this.init = function() {
             var self = this;
             form.addEventListener("submit",self.insertNewCategoryOnline);
@@ -492,7 +591,10 @@
                 e.stopPropagation();
             })
         }
-
+        /**
+         * Adds to the select element of the form an option relative to a category
+         * @param curr the object of the category to be displayed as option
+         */
         this.addOptions = function(curr) {
             var self = this;
             const currOption = document.createElement("option");
@@ -505,12 +607,17 @@
                 children.forEach(function(child){ self.addOptions(child) });
             }
         }
-
+        /**
+         * Refresh the options list given a tree of categories
+         * @param categoryList the tree that contains the categories to display
+         */
         this.refreshOptions = function(categoryList) {
             parentInput.innerHTML = "";
             this.addOptions(categoryList);
         }
-
+        /**
+         * Reset all the errors of the component
+         */
         this.resetError = function() {
             textError.classList.remove("show");
             textError.classList.add("hide");
@@ -518,27 +625,28 @@
             parentInput.classList.remove("displayInputError");
             textError.innerText = "";
         }
-
+        /**
+         * Display a new error
+         * @param text the text to display the user
+         */
         this.setError = function(text) {
             textError.classList.remove("hide");
             textError.classList.add("show");
             textError.innerText = text;
         }
-
+        /**
+         * Function to handle the submitting of the form in ONLINE mode
+         * @param e the submit event that was triggered on the form
+         */
         this.insertNewCategoryOnline = (e) => {
             var self = this;
             e.preventDefault();
-            /*if(!isTreeValid(categoryTree.categoryList,0) || !checkPrintedWithSaved(categoryTree.categoryList,document.querySelector(".rootTreeNode"))) {
-                self.setError("The tree is invalid, refresh the page");
-                return;
-            }*/
 
             if(!checkTreeIDs(categoryTree.categoryList,document.querySelector("#rootTree")) || !isTreeValid(categoryTree.categoryList,0)) {
                 self.setError("Current tree is invalid, please refresh the page");
-                pageManager.refresh(self.categoryList);
+                pageManager.refresh(categoryTree.categoryList);
                 return;
             }
-
 
             if(form.checkValidity()) {
                 let newCategory = {
@@ -579,7 +687,20 @@
                     return;
                 }
 
-                makeCall("POST","CreateNewCategory",JSON.stringify(newCategory),function(req) {
+
+
+                let data = {
+                    dataToCheck: {
+                        clientTree: buildTreeFromHTML(document.querySelector("#rootTree")),
+                        options: buildListFromOptions(parentInput)
+                    },
+                    newCategory: newCategory
+                }
+
+                console.log(data);
+
+                makeCall("POST","CreateNewCategory",JSON.stringify(data),function(req) {
+                    console.log(req.responseText);
                     const response = JSON.parse(req.responseText);
                     switch (req.status) {
                         case 200:
@@ -595,8 +716,8 @@
                             if(response.parentError) {
                                 parentInput.classList.add("displayInputError");
                             }
-                            if(response.inputErrorNewCategory) {
-                                self.setError(response.inputErrorTextNewCategory);
+                            if(response.inputError) {
+                                self.setError(response.inputErrorText);
                             }
                             break;
                     }
@@ -606,19 +727,17 @@
             }
         }
 
-
+        /**
+         * Function to handle the submitting of the form in LOCAL mode
+         * @param e the submit event that was triggered on the form
+         */
         this.insertNewCategoryLocally = (e) => {
             var self = this;
             e.preventDefault();
 
-            /*if(!isTreeValid(categoryTree.categoryList,0) || !checkPrintedWithSaved(categoryTree.categoryList,document.querySelector(".rootTreeNode"))) {
-                self.setError("The tree is invalid, refresh the page");
-                return;
-            }*/
-
             if(!checkTreeIDs(categoryTree.categoryList,document.querySelector("#rootTree")) || !isTreeValid(categoryTree.categoryList,0)) {
                 self.setError("Current tree is invalid, please refresh the page");
-                pageManager.refresh(self.categoryList);
+                pageManager.refresh(categoryTree.categoryList);
                 return;
             }
 
@@ -670,7 +789,10 @@
             }
 
         }
-
+        /**
+         * Refresh the component in LOCAL mode
+         * @param categoryList the tree to be used to display the options
+         */
         this.refreshLocal = (categoryList) => {
             // change callback to be on local
             var self = this;
@@ -678,7 +800,10 @@
             form.removeEventListener("submit",self.insertNewCategoryOnline);
             form.addEventListener("submit",self.insertNewCategoryLocally);
         }
-
+        /**
+         * Refresh the component in ONLINE mode
+         * @param categoryList the tree to be used to display the options
+         */
         this.refreshOnline = (categoryList) => {
             // change callback to be on online
             var self = this;

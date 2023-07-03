@@ -9,6 +9,7 @@ import exceptions.TooManyChildrenException;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
+import utils.DataToCheck;
 
 
 import javax.servlet.*;
@@ -19,6 +20,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 @WebServlet("/CreateNewCategory")
 public class CreateNewCategory extends HttpServlet {
@@ -50,15 +53,56 @@ public class CreateNewCategory extends HttpServlet {
         JsonObject jsonResponse = new JsonObject();
         String name, inputErrorText = "";
         Long parent;
-
-        BufferedReader reader = request.getReader();
-        NewCategoryRequest newCategoryRequest = gson.fromJson(reader, NewCategoryRequest.class);
+        CategoryDAO categoryDAO = new CategoryDAO(conn);
+        NewCategoryRequest newCategoryRequest;
         response.setContentType("application/json");
-        name = newCategoryRequest.name;
-        parent = newCategoryRequest.parent;
         System.out.println("/CreateNewCategory");
+        BufferedReader reader = request.getReader();
 
+        try {
+            newCategoryRequest = gson.fromJson(reader, NewCategoryRequest.class);
+        } catch (com.google.gson.JsonSyntaxException | com.google.gson.JsonIOException e) {
+            jsonResponse.addProperty("textError", "The server could not process the request");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write(jsonResponse.toString());
+            response.getWriter().flush();
+            return;
+        }
+
+
+        DataToCheck dataToCheck = newCategoryRequest.dataToCheck;
+
+        if(dataToCheck.getClientTree() != null && dataToCheck.getOptions() != null) {
+            ArrayList<Category> clientTree = new ArrayList<>(List.of(dataToCheck.getClientTree()));
+            ArrayList<Category> options = new ArrayList<>(List.of(dataToCheck.getOptions()));
+            try {
+                if(!categoryDAO.areTreeEqual(clientTree) || !categoryDAO.areOptionsOk(options)) {
+                    throw new CategoryNotExistsException("");
+                }
+            } catch (SQLException | CategoryNotExistsException e) {
+
+                jsonResponse.addProperty("inputErrorText", "Permission denied");
+                jsonResponse.addProperty("inputError", true);
+
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write(jsonResponse.toString());
+                response.getWriter().flush();
+                return;
+            }
+        } else {
+            jsonResponse.addProperty("inputErrorText", "Permission denied");
+            jsonResponse.addProperty("inputError", true);
+
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write(jsonResponse.toString());
+            response.getWriter().flush();
+            return;
+        }
+
+        name = newCategoryRequest.newCategory.name;
+        parent = newCategoryRequest.newCategory.parent;
         boolean inputError = false, nameError = false, parentError = false;
+
         if(name == null || name.isBlank()) {
             nameError = true;
             inputError = true;
@@ -78,48 +122,83 @@ public class CreateNewCategory extends HttpServlet {
             jsonResponse.addProperty("parentError",parentError);
             jsonResponse.addProperty("inputErrorNewCategory",inputError);
             jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
-
-            response.getWriter().write(jsonResponse.toString());
-            response.getWriter().flush();
         } else {
-            CategoryDAO categoryDAO = new CategoryDAO(conn);
             try {
+                conn.setAutoCommit(false);
                 Category justCreated = categoryDAO.createCategory(name,parent);
                 response.setStatus(HttpServletResponse.SC_OK);
 
                 if(justCreated == null) // something went wrong in the DAO (in theory it can't happen)
                     throw new SQLException();
 
+                response.setStatus(HttpServletResponse.SC_OK);
                 jsonResponse = (JsonObject) gson.toJsonTree(justCreated);
-
+                conn.commit();
                 //if everything is ok then don't set any attributes
             } catch (SQLException e) {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                inputErrorText = "Internal server error, try again later";
-                jsonResponse.addProperty("nameError",false);
-                jsonResponse.addProperty("parentError",false);
-                jsonResponse.addProperty("inputErrorNewCategory",true);
-                jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                try {
+                    conn.rollback();
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    inputErrorText = "Internal server error, try again later";
+                    jsonResponse.addProperty("nameError",false);
+                    jsonResponse.addProperty("parentError",false);
+                    jsonResponse.addProperty("inputErrorNewCategory",true);
+                    jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                } catch (SQLException ex) {
+                    inputErrorText = "Internal server error, try again later";
+                    jsonResponse.addProperty("nameError",false);
+                    jsonResponse.addProperty("parentError",false);
+                    jsonResponse.addProperty("inputErrorNewCategory",true);
+                    jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                }
+
             } catch (TooManyChildrenException e) {
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                inputErrorText = "Selected parent has too many children (max 9)";
-                jsonResponse.addProperty("nameError",false);
-                jsonResponse.addProperty("parentError",true);
-                jsonResponse.addProperty("inputErrorNewCategory",true);
-                jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                try {
+                    conn.rollback();
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    inputErrorText = "Selected parent has too many children (max 9)";
+                    jsonResponse.addProperty("nameError",false);
+                    jsonResponse.addProperty("parentError",true);
+                    jsonResponse.addProperty("inputErrorNewCategory",true);
+                    jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                } catch (SQLException ex) {
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    inputErrorText = "Internal server error";
+                    jsonResponse.addProperty("nameError",false);
+                    jsonResponse.addProperty("parentError",false);
+                    jsonResponse.addProperty("inputErrorNewCategory",true);
+                    jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                }
             } catch (CategoryNotExistsException e) {
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                inputErrorText = "Selected parent does not exist";
-                jsonResponse.addProperty("nameError",false);
-                jsonResponse.addProperty("parentError",true);
-                jsonResponse.addProperty("inputErrorNewCategory",true);
-                jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                try {
+                    conn.rollback();
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    inputErrorText = "Selected parent does not exist";
+                    jsonResponse.addProperty("nameError",false);
+                    jsonResponse.addProperty("parentError",true);
+                    jsonResponse.addProperty("inputErrorNewCategory",true);
+                    jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                } catch (SQLException ex) {
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    inputErrorText = "Internal server error";
+                    jsonResponse.addProperty("nameError",false);
+                    jsonResponse.addProperty("parentError",false);
+                    jsonResponse.addProperty("inputErrorNewCategory",true);
+                    jsonResponse.addProperty("inputErrorTextNewCategory",inputErrorText);
+                }
+
             } finally {
-                response.getWriter().flush();
-                response.getWriter().write(jsonResponse.toString());
-                response.getWriter().flush();
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    jsonResponse = new JsonObject();
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    jsonResponse.addProperty("textError","Internal server error");
+                }
             }
         }
+        response.getWriter().write(jsonResponse.toString());
+        response.getWriter().flush();
     }
 
     public void destroy() {
@@ -133,7 +212,19 @@ public class CreateNewCategory extends HttpServlet {
     }
 
     private class NewCategoryRequest {
+        DataToCheck dataToCheck;
+        NewCategory newCategory;
+    }
+
+    private class NewCategory {
         public String name;
         public Long parent;
+        public Options[] options;
+    }
+
+    private class Options {
+        public long ID_Category;
+        public String name;
+        public String num;
     }
 }

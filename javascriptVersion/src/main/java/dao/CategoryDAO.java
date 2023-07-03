@@ -2,6 +2,7 @@ package dao;
 
 import beans.Category;
 import exceptions.CategoryNotExistsException;
+import exceptions.InvalidCategoryException;
 import exceptions.TooManyChildrenException;
 
 import java.sql.Connection;
@@ -9,6 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CategoryDAO {
 
@@ -22,7 +26,7 @@ public class CategoryDAO {
         preparedStatement.setLong(1,ID_requested);
         ResultSet result = preparedStatement.executeQuery();
         if(!result.isBeforeFirst()) { // no category has been found
-            return null;
+            throw new CategoryNotExistsException("Requested category has not been found");
         } else {
             result.next();
             long ID_Category = result.getLong("ID_Category");
@@ -110,23 +114,14 @@ public class CategoryDAO {
         } else {
             num = parentCategory.getNum() + Integer.toString(currentNumChildren + 1);
         }
-        conn.setAutoCommit(false);
         String query = "INSERT INTO category(name,num,parent) values (?,?,?)";
         PreparedStatement createStatement = conn.prepareStatement(query);
         createStatement.setString(1,name);
         createStatement.setString(2,num);
         createStatement.setLong(3,parent);
         createStatement.executeUpdate();
-        try {
-            Category temp = this.getCategoryFromNum(num);
-            conn.commit();
-            return temp;
-        } catch(CategoryNotExistsException e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        Category temp = this.getCategoryFromNum(num);
+        return temp;
 
     }
 
@@ -139,17 +134,10 @@ public class CategoryDAO {
      * @throws TooManyChildrenException
      * @throws CategoryNotExistsException
      */
-    public void copySubTree(Category source, Category destination) throws SQLException, TooManyChildrenException, CategoryNotExistsException {
-        conn.setAutoCommit(false);
-        try {
-            insertNewSubTree(source, destination);
-            conn.commit();
-        } catch (SQLException | CategoryNotExistsException | TooManyChildrenException e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+    public void copySubTree(Category source, Category destination) throws SQLException, TooManyChildrenException, CategoryNotExistsException, InvalidCategoryException {
+        if(source.getID_Category() == destination.getID_Category() || source.getNum().equals(destination.getNum()))
+            throw new InvalidCategoryException("Source and destination are the same");
+        insertNewSubTree(source, destination);
     }
 
 
@@ -190,37 +178,14 @@ public class CategoryDAO {
 
         //check if the requested category exists
         Category temp = this.getCategoryFromId(ID_Category);
-        conn.setAutoCommit(false);
         PreparedStatement updateQuery = conn.prepareStatement(query);
         updateQuery.setString(1,newName);
         updateQuery.setLong(2, ID_Category);
         updateQuery.executeUpdate();
+        temp = this.getCategoryFromId(ID_Category);
+        return temp;
 
-        // return the update category
-        try {
-            temp = this.getCategoryFromId(ID_Category);
-            conn.commit();
-            return temp;
-        } catch (CategoryNotExistsException e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
 
-    }
-
-    /**
-     * Check if two categories are equals beside their children
-     * @param x first category to check
-     * @param y second category to check
-     * @return true if x and y have the same ID, name, num and parent
-     */
-    private boolean equalsCategory(Category x, Category y) {
-        if(x.getID_Category() != y.getID_Category() || !x.getNum().equals(y.getNum()) || !x.getName().equals(y.getName()) ||
-           x.getParent() != y.getParent())
-            return false;
-        return true;
     }
     private int countDirectChildrenOf(long ID_Category) throws SQLException, CategoryNotExistsException {
         String checkQuery = "select * from category where ID_Category = ?";
@@ -265,6 +230,86 @@ public class CategoryDAO {
         } else {
             // no result from query. don't think can happen because it's a count
             return -1;
+        }
+    }
+
+    /**
+     * Checks if the tree are equal. It does not check if the root exists
+     * @param userTree
+     * @return
+     * @throws SQLException
+     * @throws CategoryNotExistsException
+     */
+    public boolean areTreeEqual(ArrayList<Category> userTree) throws SQLException, CategoryNotExistsException {
+        ArrayList<Category> serverTree = this.getCategoryFromId(1).getChildren();
+        if(serverTree.size() != userTree.size())
+            return false;
+        for(int i=0; i<serverTree.size(); i++) {
+            if(!categoryEquals(serverTree.get(i),userTree.get(i)))
+                return false;
+        }
+        return true;
+    }
+
+    private boolean categoryEquals(Category x, Category y) {
+        if(x.getID_Category() == y.getID_Category() && x.getName().equals(y.getName()) && x.getNum().equals(y.getNum()) && x.getParent() == y.getParent()) {
+            if(x.getChildren().size() == y.getChildren().size()) {
+                ArrayList<Category> xChildren = x.getChildren();
+                ArrayList<Category> yChildren = y.getChildren();
+                for(int i=0; i< xChildren.size(); i++) {
+                    if(!this.categoryEquals(xChildren.get(i), yChildren.get(i)))
+                        return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public boolean areOptionsOk(ArrayList<Category> options) throws SQLException, CategoryNotExistsException {
+        Category serverTree = this.getCategoryFromId(1);
+        ArrayList<Long> serverIDs = new ArrayList<>(), clientIDs = new ArrayList<>();
+        ArrayList<String> serverNUMs = new ArrayList<>(), clientNUMs = new ArrayList<>();
+        Set<Long> x, y;
+        Set<String> a,b;
+        ArrayList<Category> temp = new ArrayList<>();
+        temp.add(serverTree);
+
+        createListId(temp, serverIDs, serverNUMs);
+        createListIdFromOptions(options, clientIDs, clientNUMs);
+        x = new HashSet<>(serverIDs);
+        y = new HashSet<>(clientIDs);
+        if(y.size() != clientIDs.size() || x.size() != serverIDs.size()) {
+            return false;
+        } else if(x.containsAll(y) && x.size() == y.size()) {
+            return true;
+        }
+
+        a = new HashSet<>(serverNUMs);
+        b = new HashSet<>(clientNUMs);
+        if(b.size() != clientNUMs.size() || a.size() != serverNUMs.size()) {
+            return false;
+        } else if(a.containsAll(b) && a.size() == b.size()) {
+            return true;
+        }
+        return false;
+    }
+
+    private void createListId(ArrayList<Category> categories, ArrayList<Long> ids, ArrayList<String> nums) throws SQLException, CategoryNotExistsException {
+        for(Category curr : categories) {
+            ids.add(curr.getID_Category());
+            nums.add(curr.getNum());
+            if(curr.getChildren() != null && curr.getChildren().size() != 0) {
+                createListId(curr.getChildren(), ids, nums);
+            }
+        }
+    }
+
+    private void createListIdFromOptions(ArrayList<Category> options, ArrayList<Long> ids, ArrayList<String> nums) {
+        for(Category curr : options) {
+            ids.add(curr.getID_Category());
+            nums.add(curr.getNum());
         }
     }
 

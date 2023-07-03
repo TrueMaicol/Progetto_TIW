@@ -237,3 +237,60 @@ function isRoot(ID_Category) {
         return true;
     return false;
 }
+
+function buildTreeFromHTML(rootNode) {
+    var temp = [];
+    const topElements = rootNode.children;
+    for(var i=0; i<topElements.length; i++) {
+        temp.push(createCategoryFromHTML(topElements[i]));
+    }
+    return temp;
+}
+
+function buildListFromOptions(selectElement) {
+    if(selectElement === undefined)
+        return null;
+    const list = [];
+    const options = selectElement.children;
+    for(var i=0; i<options.length; i++) {
+        const ID_Category = options[i].value;
+        if(ID_Category === 0)
+            continue;
+        const [num, ...name] = options[i].innerText.split(" ");
+        const curr = {
+            ID_Category: options[i].value,
+            name: name.join(" "),
+            num: num
+        }
+        list.push(curr);
+    }
+    return list;
+
+}
+
+function createCategoryFromHTML(htmlNode) {
+    const div = htmlNode.querySelector(".treeElementContent");
+    const text = div.children[0];
+    const [num, ...name] = text.innerText.split(" ");
+    /*const name = div.children[1];
+    const num = div.children[0];*/
+    const curr = {
+        ID_Category: parseInt(htmlNode.getAttribute("idcategory")),
+        name: name.join(" "),
+        num: num,
+        parent: parseFloat(htmlNode.getAttribute("idparent")),
+        childrenList: []
+    }
+    if(curr.ID_Category === 0)
+        return null;
+    const childrenList = htmlNode.querySelector("ul");
+    if(childrenList !== undefined && childrenList !== null) {
+        const childrenElements = childrenList.children;
+        for(var i=0; i<childrenElements.length; i++) {
+            const temp = createCategoryFromHTML(childrenElements[i]);
+            if(temp !== null)
+                curr.childrenList.push(temp);
+        }
+    }
+    return curr;
+}
