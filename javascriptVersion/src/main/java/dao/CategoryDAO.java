@@ -1,6 +1,7 @@
 package dao;
 
 import beans.Category;
+import beans.ClientCategory;
 import exceptions.CategoryNotExistsException;
 import exceptions.InvalidCategoryException;
 import exceptions.TooManyChildrenException;
@@ -310,6 +311,44 @@ public class CategoryDAO {
         for(Category curr : options) {
             ids.add(curr.getID_Category());
             nums.add(curr.getNum());
+        }
+    }
+
+
+    private Set<String> getParentNums(ClientCategory root) throws SQLException, CategoryNotExistsException {
+        Category curr = this.getCategoryFromId((long) root.parent);
+        Set<String> parentNums = new HashSet<>();
+
+        do {
+            parentNums.add(curr.getNum());
+            curr = this.getCategoryFromId(curr.getParent());
+        } while(curr.getID_Category() != 1);
+
+        return parentNums;
+    }
+
+    /**
+     *
+     * @param newCategory the category tree to be checked
+     * @return
+     */
+    public boolean isCopyPossible(ClientCategory newCategory) throws SQLException, CategoryNotExistsException {
+        Set<String> parentNums = this.getParentNums(newCategory);
+
+        return checkNums(newCategory, parentNums);
+
+    }
+
+    private boolean checkNums(ClientCategory curr, Set<String> nums) {
+        if(nums.contains(curr.sourceNum)) {
+            return false;
+        } else {
+            nums.add(curr.num);
+            for(ClientCategory x : curr.childrenList) {
+                if(!checkNums(x,nums))
+                    return false;
+            }
+            return true;
         }
     }
 
