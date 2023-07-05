@@ -19,7 +19,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @WebServlet("/ApplyChanges")
 public class ApplyChanges extends HttpServlet {
@@ -162,16 +164,19 @@ public class ApplyChanges extends HttpServlet {
 
     private void addCategories(ClientCategory[] newCategories) throws TooManyChildrenException, SQLException, CategoryNotExistsException, InvalidCategoryException {
         CategoryDAO categoryDAO = new CategoryDAO(conn);
-        for(int i=0; i<newCategories.length; i++) {
-            Category elem = buildCategoryFromRequest(newCategories[i]);
-            if(elem.getName() == null || elem.getName().isBlank())
+        for (ClientCategory newCategory : newCategories) {
+            if (!categoryDAO.isCopyPossible(newCategory))
+                throw new InvalidCategoryException("Copy request rejected");
+
+            Category elem = buildCategoryFromRequest(newCategory);
+            if (elem.getName() == null || elem.getName().isBlank())
                 throw new InvalidCategoryException("Given a name that was not valid");
 
             Category parent = categoryDAO.getCategoryFromId(elem.getParent());
             categoryDAO.copySubTree(elem, parent);
             /*
                 Even though all the categories we are trying to add via this servlet have fake ids the first parent for each set of category has an id that is true!
-                If for some reason it happens that a parent is not found then it is thrown a CategoryNotExistsException.
+                If for some reason it happens that a parent is not found then is thrown a CategoryNotExistsException.
                 We are also ensured that the tree we are adding to the database is valid in terms of number of children, this happens with the buildCategoryFromRequest method.
              */
         }

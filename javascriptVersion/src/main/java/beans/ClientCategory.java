@@ -5,5 +5,6 @@ public class ClientCategory {
     public String name;
     public String num;
     public double parent;
+    public String sourceNum;
     public ClientCategory[] childrenList;
 }

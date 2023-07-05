@@ -136,11 +136,29 @@ public class CategoryDAO {
      * @throws CategoryNotExistsException
      */
     public void copySubTree(Category source, Category destination) throws SQLException, TooManyChildrenException, CategoryNotExistsException, InvalidCategoryException {
-        if(source.getID_Category() == destination.getID_Category() || source.getNum().equals(destination.getNum()))
-            throw new InvalidCategoryException("Source and destination are the same");
+        if(isChildrenOf(source, destination) || source.getID_Category() == destination.getID_Category() || source.getNum().equals(destination.getNum()))
+            throw new InvalidCategoryException("Copy request denied");
         insertNewSubTree(source, destination);
     }
 
+    /**
+     * Check if elem is a children of parent
+     * @param elem the supposed children category
+     * @param parent the supposed parent category
+     * @return true if the elem category is a children of the parent category, false otherwise
+     */
+    private boolean isChildrenOf(Category elem, Category parent) {
+        if(elem.getParent() == parent.getID_Category())
+            return true;
+
+        for(Category curr : parent.getChildren()) {
+            if(isChildrenOf(elem, curr))
+                return true;
+        }
+
+        return false;
+
+    }
 
     /**
      * Recursive function to insert each category of a subtree as a children of the parent. First call is sourceTree, destinationParent
@@ -314,6 +332,32 @@ public class CategoryDAO {
         }
     }
 
+    /**
+     *
+     * @param newCategory the category tree to be checked
+     * @return
+     */
+    public boolean isCopyPossible(ClientCategory newCategory) throws SQLException, CategoryNotExistsException {
+        Set<String> parentNums = this.getParentNums(newCategory);
+
+        return checkSubtree(newCategory, parentNums);
+
+    }
+
+    private boolean checkSubtree(ClientCategory curr, Set<String> nums) {
+        if(nums.contains(curr.sourceNum)) {
+            return false;
+        } else {
+            nums.add(curr.num);
+            if(curr.childrenList.length > 9)
+                return false;
+            for(ClientCategory x : curr.childrenList) {
+                if(!checkSubtree(x,nums))
+                    return false;
+            }
+            return true;
+        }
+    }
 
     private Set<String> getParentNums(ClientCategory root) throws SQLException, CategoryNotExistsException {
         Category curr = this.getCategoryFromId((long) root.parent);
@@ -326,30 +370,4 @@ public class CategoryDAO {
 
         return parentNums;
     }
-
-    /**
-     *
-     * @param newCategory the category tree to be checked
-     * @return
-     */
-    public boolean isCopyPossible(ClientCategory newCategory) throws SQLException, CategoryNotExistsException {
-        Set<String> parentNums = this.getParentNums(newCategory);
-
-        return checkNums(newCategory, parentNums);
-
-    }
-
-    private boolean checkNums(ClientCategory curr, Set<String> nums) {
-        if(nums.contains(curr.sourceNum)) {
-            return false;
-        } else {
-            nums.add(curr.num);
-            for(ClientCategory x : curr.childrenList) {
-                if(!checkNums(x,nums))
-                    return false;
-            }
-            return true;
-        }
-    }
-
 }

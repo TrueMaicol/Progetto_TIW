@@ -453,6 +453,7 @@
                 const sourceCopy = JSON.parse(JSON.stringify(source));
                 destination.childrenList.push(sourceCopy);
                 updateCategoryProperties(sourceCopy,destination);
+                insertSourceNum(source, sourceCopy);
                 self.addCategoryToNew(sourceCopy);
             }
         }
