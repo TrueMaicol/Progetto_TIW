@@ -6,9 +6,6 @@ import com.google.gson.JsonObject;
 import dao.CategoryDAO;
 import exceptions.CategoryNotExistsException;
 import exceptions.TooManyChildrenException;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
 import utils.DataToCheck;
 
 

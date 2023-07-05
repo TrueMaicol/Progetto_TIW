@@ -1,7 +1,7 @@
 package controllers;
 
 import beans.Category;
-import beans.ClientCategory;
+import utils.ClientCategory;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dao.CategoryDAO;
@@ -19,9 +19,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @WebServlet("/ApplyChanges")
 public class ApplyChanges extends HttpServlet {
@@ -70,16 +68,17 @@ public class ApplyChanges extends HttpServlet {
 
         DataToCheck dataToCheck = changesRequest.dataToCheck;
 
-        if (dataToCheck.getClientTree() != null && dataToCheck.getOptions() != null) {
+        if (dataToCheck.getClientTree() != null && dataToCheck.getOptions() != null && dataToCheck.getClientTreeSAVED() != null) {
             ArrayList<Category> clientTree = new ArrayList<>(List.of(dataToCheck.getClientTree()));
             ArrayList<Category> options = new ArrayList<>(List.of(dataToCheck.getOptions()));
             try {
                 if (!categoryDAO.areTreeEqual(clientTree) || !categoryDAO.areOptionsOk(options)) {
-                    throw new CategoryNotExistsException("");
+                    throw new CategoryNotExistsException("The tree has been manipulated, please refresh the page");
+                } else if(dataToCheck.hasSavedDuplicates()) {
+                    throw new InvalidCategoryException("Given tree is invalid");
                 }
-            } catch (SQLException | CategoryNotExistsException e) {
-                jsonResponse.addProperty("inputErrorText", "Permission denied");
-                jsonResponse.addProperty("inputError", true);
+            } catch (SQLException | CategoryNotExistsException | InvalidCategoryException e) {
+                jsonResponse.addProperty("textError", "Permission denied");
 
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write(jsonResponse.toString());
@@ -87,8 +86,7 @@ public class ApplyChanges extends HttpServlet {
                 return;
             }
         } else {
-            jsonResponse.addProperty("inputErrorText", "Permission denied");
-            jsonResponse.addProperty("inputError", true);
+            jsonResponse.addProperty("textError", "Permission denied");
 
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write(jsonResponse.toString());
@@ -100,7 +98,7 @@ public class ApplyChanges extends HttpServlet {
             conn.setAutoCommit(false);
             addCategories(changesRequest.newCategories);
             renameCategories(changesRequest.renamedCategories);
-            //renameCategories(...)
+            response.setStatus(HttpServletResponse.SC_OK);
             jsonResponse.addProperty("status", "ok");
             conn.commit();
         } catch (TooManyChildrenException | CategoryNotExistsException | InvalidCategoryException e) {

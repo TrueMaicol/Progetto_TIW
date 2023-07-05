@@ -1,9 +1,9 @@
 package dao;
 
 import beans.Category;
-import beans.ClientCategory;
-import exceptions.CategoryNotExistsException;
 import exceptions.InvalidCategoryException;
+import utils.ClientCategory;
+import exceptions.CategoryNotExistsException;
 import exceptions.TooManyChildrenException;
 
 import java.sql.Connection;
@@ -11,7 +11,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -135,30 +134,10 @@ public class CategoryDAO {
      * @throws TooManyChildrenException
      * @throws CategoryNotExistsException
      */
-    public void copySubTree(Category source, Category destination) throws SQLException, TooManyChildrenException, CategoryNotExistsException, InvalidCategoryException {
-        if(isChildrenOf(source, destination) || source.getID_Category() == destination.getID_Category() || source.getNum().equals(destination.getNum()))
-            throw new InvalidCategoryException("Copy request denied");
+    public void copySubTree(Category source, Category destination) throws SQLException, TooManyChildrenException, CategoryNotExistsException {
         insertNewSubTree(source, destination);
     }
 
-    /**
-     * Check if elem is a children of parent
-     * @param elem the supposed children category
-     * @param parent the supposed parent category
-     * @return true if the elem category is a children of the parent category, false otherwise
-     */
-    private boolean isChildrenOf(Category elem, Category parent) {
-        if(elem.getParent() == parent.getID_Category())
-            return true;
-
-        for(Category curr : parent.getChildren()) {
-            if(isChildrenOf(elem, curr))
-                return true;
-        }
-
-        return false;
-
-    }
 
     /**
      * Recursive function to insert each category of a subtree as a children of the parent. First call is sourceTree, destinationParent
@@ -345,6 +324,8 @@ public class CategoryDAO {
     }
 
     private boolean checkSubtree(ClientCategory curr, Set<String> nums) {
+        if(curr.sourceNum == null || curr.sourceNum.equals("0"))
+            return false;
         if(nums.contains(curr.sourceNum)) {
             return false;
         } else {
@@ -363,10 +344,10 @@ public class CategoryDAO {
         Category curr = this.getCategoryFromId((long) root.parent);
         Set<String> parentNums = new HashSet<>();
 
-        do {
+        while(curr.getID_Category() != 1) {
             parentNums.add(curr.getNum());
             curr = this.getCategoryFromId(curr.getParent());
-        } while(curr.getID_Category() != 1);
+        }
 
         return parentNums;
     }

@@ -1,4 +1,4 @@
-package beans;
+package utils;
 
 public class ClientCategory {
     public double ID_Category;

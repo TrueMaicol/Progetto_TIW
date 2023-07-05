@@ -211,7 +211,7 @@
             e.stopPropagation();
             var self = this;
 
-            const currentTree = buildTreeFromHTML(rootList);
+            currentTree = buildTreeFromHTML(rootList);
 
             if(!checkTreeIDs(self.categoryList,rootList)) {
                 self.setError("The tree was corrupted, try again");
@@ -355,7 +355,7 @@
             const cancelButton = dragDropModal.querySelector(".cancel");
 
             confirmButton.addEventListener("click",function confirmCallback() {
-                currentTree = buildTreeFromHTML(rootList);
+                //currentTree = buildTreeFromHTML(rootList);
                 options = buildListFromOptions(document.getElementsByClassName("newCategoryInput")[1]);
                 copySubTree(source,destination);
                 pageManager.setModeToLocal(self.categoryList);
@@ -423,9 +423,9 @@
 
             draggedOn.classList.remove("textGreen");
 
-            /*if(pageManager.currentMode === Modes.ONLINE)
+            if(pageManager.currentMode === Modes.ONLINE)
                 currentTree = buildTreeFromHTML(rootList);
-            */
+
             if(!checkTreeIDs(self.categoryList,rootList) || !isTreeValid(categoryTree.categoryList,0)) {
                 self.setError("The tree was corrupted, try again");
                 pageManager.refresh(self.categoryList);
@@ -539,11 +539,12 @@
                 pageManager.refresh(self.categoryList);
             }
 
-            currentTree = buildTreeFromHTML(rootList);
+            //currentTree = buildTreeFromHTML(rootList);
 
             let data = {
                 dataToCheck: {
                     clientTree: currentTree,
+                    clientTreeSAVED: self.categoryList,
                     options: options
                 },
                 newCategories: newCategories,
@@ -782,6 +783,7 @@
 
                 categoryTree.insertNewCategory(newCategory);
                 updateCategoryProperties(newCategory, selectedParent);
+                newCategory.sourceNum = newCategory.ID_Category.toString();
                 categoryTree.addCategoryToNew(newCategory);
                 pageManager.refresh(categoryTree.categoryList);
 

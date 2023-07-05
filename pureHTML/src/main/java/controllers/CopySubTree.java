@@ -3,6 +3,7 @@ package controllers;
 import beans.Category;
 import dao.CategoryDAO;
 import exceptions.CategoryNotExistsException;
+import exceptions.InvalidCategoryException;
 import exceptions.TooManyChildrenException;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -40,7 +41,6 @@ public class CopySubTree extends HttpServlet {
         HttpSession session = request.getSession();
         Long from, to;
         String path;
-        Category fromCategory, toCategory;
         CategoryDAO categoryDAO = new CategoryDAO(conn);
         from = Long.parseLong(request.getParameter("from"));
         to = Long.parseLong(request.getParameter("to"));
@@ -53,11 +53,11 @@ public class CopySubTree extends HttpServlet {
         }
 
         try {
+
+            if(!categoryDAO.isCopyPossible(from, to))
+                throw new InvalidCategoryException("Copy request denied");
             categoryDAO.copySubTree(from,to);
-        } catch (NumberFormatException e) {
-            session.setAttribute("inputErrorCopySubTree", true);
-            session.setAttribute("inputErrorTextCopySubTree","Could not identify which sub tree to copy");
-        } catch (CategoryNotExistsException | TooManyChildrenException e) {
+        } catch (CategoryNotExistsException | TooManyChildrenException | InvalidCategoryException e) {
             session.setAttribute("inputErrorCopySubTree", true);
             session.setAttribute("inputErrorTextCopySubTree",e.getMessage());
         } catch (SQLException e) {

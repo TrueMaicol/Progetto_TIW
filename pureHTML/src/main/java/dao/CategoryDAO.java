@@ -2,6 +2,7 @@ package dao;
 
 import beans.Category;
 import exceptions.CategoryNotExistsException;
+import exceptions.InvalidCategoryException;
 import exceptions.TooManyChildrenException;
 
 import java.sql.Connection;
@@ -9,7 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class CategoryDAO {
 
@@ -276,6 +279,49 @@ public class CategoryDAO {
                     System.out.println("altro problema");
 
             }
+    }
+
+    public boolean isCopyPossible(Long from, Long to) throws SQLException, CategoryNotExistsException {
+        Category source = this.getCategoryFromId(from), destination = this.getCategoryFromId(to);
+        if(to == 1 && destination.getChildren().size() < 9)
+            return true;
+        Set<Long> parentIDs = this.getParentIDs(destination);
+
+        // if the set of direct parents of the destination contains the source the copy request is invalid
+        if(parentIDs.contains(source.getID_Category()))
+            return false;
+        else
+            return true;
+
+    }
+
+    private boolean checkSubtree(Category curr, Set<Long> ids) {
+        if(curr.getNum().equals("0"))
+            return false;
+        if(ids.contains(curr.getID_Category())) {
+            return false;
+        } else {
+            ids.add(curr.getID_Category());
+            if(curr.getChildren().size() > 9)
+                return false;
+            for(Category x : curr.getChildren()) {
+                if(!checkSubtree(x,ids))
+                    return false;
+            }
+            return true;
+        }
+    }
+
+    private Set<Long> getParentIDs(Category root) throws SQLException, CategoryNotExistsException {
+        Category curr = this.getCategoryFromId(root.getParent());
+        Set<Long> parentIDs = new HashSet<>();
+
+        do {
+            parentIDs.add(curr.getID_Category());
+            curr = this.getCategoryFromId(curr.getParent());
+        } while(curr.getID_Category() != 1);
+
+        return parentIDs;
     }
 
 }

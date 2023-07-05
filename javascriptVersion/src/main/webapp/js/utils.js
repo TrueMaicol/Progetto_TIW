@@ -297,7 +297,7 @@ function createCategoryFromHTML(htmlNode) {
 
 function insertSourceNum(realSource, sourceCopy) {
     sourceCopy.sourceNum = realSource.num;
-    if(realSource.childrenList !== undefined && realSource.childrenList.length > 0) {
+    if(sourceCopy.childrenList !== undefined && sourceCopy.childrenList.length > 0) {
         for(var i=0; i<realSource.childrenList.length; i++) {
             insertSourceNum(realSource.childrenList[i], sourceCopy.childrenList[i]);
         }
